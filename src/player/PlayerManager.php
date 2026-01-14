@@ -21,34 +21,25 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\network\raklib;
+namespace aquarelay\player;
 
-use aquarelay\network\PacketSender;
+use aquarelay\utils\LoginData;
 
-class RakLibPacketSender implements PacketSender {
+class PlayerManager {
+	/** @var Player[] */
+	private array $players = [];
 
-	private bool $isClosed = false;
-	public function __construct(
-		private int $sessionId,
-		private RakLibInterface $interface
-	){}
-
-	public function sendPacket(string $payload, bool $immediate, ?int $receiptId) : void{
-		if(!$this->isClosed){
-			$this->interface->sendPacket($this->sessionId, $payload, $immediate, $receiptId);
-		}
+	public function createPlayer($session, LoginData $data): Player {
+		$player = new Player($session, $data);
+		$this->players[spl_object_hash($session)] = $player;
+		return $player;
 	}
 
-	public function sendRawPacket(string $buffer) : void {
-		if(!$this->isClosed){
-			$this->interface->sendPacket($this->sessionId, $buffer);
-		}
+	public function getPlayerBySession($session): ?Player {
+		return $this->players[spl_object_hash($session)] ?? null;
 	}
 
-	public function close() : void{
-		if(!$this->isClosed){
-			$this->isClosed = true;
-			$this->interface->close($this->sessionId);
-		}
+	public function removePlayer($session): void {
+		unset($this->players[spl_object_hash($session)]);
 	}
 }
