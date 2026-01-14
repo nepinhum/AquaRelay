@@ -1,28 +1,34 @@
 #!/usr/bin/env bash
-
 set -e
 
 function bump_version() {
 	BASE_VERSION="$1"
 
-	suffix="$(echo "$BASE_VERSION" | cut -d- -sf2)"
-	if [ "$suffix" != "" ]; then
-		major_minor_patch="$(echo "$BASE_VERSION" | cut -d- -f1)"
-		suffix_type="$(echo "$suffix" | sed -n "s/^\([A-Za-z]*\)\([0-9]*\)$/\1/p")"
-		suffix_number="$(echo "$suffix" | sed -n "s/^\([A-Za-z]*\)\([0-9]*\)$/\2/p")"
+	if [[ "$BASE_VERSION" =~ -$ ]]; then
+		echo "error: invalid version format: $BASE_VERSION"
+		exit 1
+	fi
 
-		if [ "$suffix_number" == "" ]; then
-			# alpha -> alpha1
-			new_version="$major_minor_patch-$suffix_type1"
+	if [[ "$BASE_VERSION" == *"-"* ]]; then
+		major_minor_patch="${BASE_VERSION%%-*}"
+		suffix="${BASE_VERSION##*-}"
+
+		if [[ "$suffix" =~ ^([a-zA-Z]+)([0-9]*)$ ]]; then
+			type="${BASH_REMATCH[1]}"
+			num="${BASH_REMATCH[2]}"
+
+			if [[ "$num" == "" ]]; then
+				new_version="$major_minor_patch-$type1"
+			else
+				new_version="$major_minor_patch-$type$((num+1))"
+			fi
 		else
-			new_release_number=$((suffix_number+1))
-			new_version="$major_minor_patch-$suffix_type$new_release_number"
+			echo "error: unknown suffix format: $suffix"
+			exit 1
 		fi
 	else
-		patch="$(echo "$BASE_VERSION" | cut -d. -sf3)"
-		major_minor="$(echo "$BASE_VERSION" | cut -d. -sf1-2)"
-		new_patch=$((patch+1))
-		new_version="$major_minor.$new_patch"
+		IFS='.' read -r major minor patch <<< "$BASE_VERSION"
+		new_version="$major.$minor.$((patch+1))"
 	fi
 
 	echo "$new_version"
@@ -31,18 +37,17 @@ function bump_version() {
 cd "$1"
 additional_info="$2"
 
-version_regex='^(\s*public const VERSION = \")(.+)(\";)'
+version_regex='^(\s*public const VERSION = ")([^"]+)(";)'
 
 BASE_VERSION="$(sed -nE "s/$version_regex/\2/p" "./src/ProxyServer.php")"
 
-if [ "$BASE_VERSION" == "" ]; then
+if [[ -z "$BASE_VERSION" ]]; then
 	echo "error: VERSION not found in ProxyServer.php"
 	exit 1
 fi
 
 NEW_VERSION="$(bump_version "$BASE_VERSION")"
 
-sed -i -E "s/$version_regex/\1___replaceme___\3/" "./src/ProxyServer.php"
-sed -i "s/___replaceme___/$NEW_VERSION/" "./src/ProxyServer.php"
+sed -i -E "s/$version_regex/\1$NEW_VERSION\3/" "./src/ProxyServer.php"
 
 git commit -m "Next: $NEW_VERSION" -m "$additional_info" --only "./src/ProxyServer.php"
