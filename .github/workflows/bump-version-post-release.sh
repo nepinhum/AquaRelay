@@ -4,11 +4,6 @@ set -e
 function bump_version() {
 	BASE_VERSION="$1"
 
-	if [[ "$BASE_VERSION" =~ -$ ]]; then
-		echo "error: invalid version format: $BASE_VERSION"
-		exit 1
-	fi
-
 	if [[ "$BASE_VERSION" == *"-"* ]]; then
 		major_minor_patch="${BASE_VERSION%%-*}"
 		suffix="${BASE_VERSION##*-}"
@@ -17,10 +12,10 @@ function bump_version() {
 			type="${BASH_REMATCH[1]}"
 			num="${BASH_REMATCH[2]}"
 
-			if [[ "$num" == "" ]]; then
-				new_version="$major_minor_patch-$type1"
+			if [[ -z "$num" ]]; then
+				echo "$major_minor_patch-$type1"
 			else
-				new_version="$major_minor_patch-$type$((num+1))"
+				echo "$major_minor_patch-$type$((num+1))"
 			fi
 		else
 			echo "error: unknown suffix format: $suffix"
@@ -28,18 +23,16 @@ function bump_version() {
 		fi
 	else
 		IFS='.' read -r major minor patch <<< "$BASE_VERSION"
-		new_version="$major.$minor.$((patch+1))"
+		echo "$major.$minor.$((patch+1))"
 	fi
-
-	echo "$new_version"
 }
 
 cd "$1"
 additional_info="$2"
 
-version_regex='^(\s*public const VERSION = ")([^"]+)(";)'
+version_regex='(public const VERSION = ")([^"]+)(";)'
 
-BASE_VERSION="$(sed -nE "s/$version_regex/\2/p" "./src/ProxyServer.php")"
+BASE_VERSION="$(sed -nE "s/.*$version_regex.*/\2/p" "./src/ProxyServer.php")"
 
 if [[ -z "$BASE_VERSION" ]]; then
 	echo "error: VERSION not found in ProxyServer.php"
