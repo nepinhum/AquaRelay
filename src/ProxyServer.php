@@ -140,19 +140,24 @@ class ProxyServer {
 
 		self::$instance = $this;
 		$startTime = microtime(true);
-		$configFile = $this->dataPath . "/config.yml";
+		$configFile = $this->dataPath . "config.yml";
 
 		if (!file_exists($configFile)) {
-			$source = RESOURCE_PATH . "/config.yml";
+			$source = $this->resourcePath . "config.yml";
+
 			if (!file_exists($source)) {
 				throw new \RuntimeException("Default configuration file missing in resources folder");
 			}
 
-			if (!copy($source, $configFile)) {
+			$data = file_get_contents($source);
+			if ($data === false) {
+				throw new \RuntimeException("Failed to read default config.yml from resources");
+			}
+
+			if (file_put_contents($configFile, $data) === false) {
 				throw new \RuntimeException("Failed to create config.yml. Please check permissions.");
 			}
 		}
-		
 		$this->config = ProxyConfig::load($configFile);
 		$this->logger = new MainLogger("Main Thread", $this->getConfig()->getMiscSettings()->getLogName(), $this->isDebug());
 
@@ -163,7 +168,7 @@ class ProxyServer {
 		$this->logger->info("Loading server configuration");
 
 		$this->logger->info("Starting " . $this->getName() . " version " . $this->getVersion());
-		$this->logger->info("This server is running Minecraft: Bedrock Edition " . Colors::BLUE . "v" . $this->getMinecraftVersion());
+		$this->logger->info("This server is running Minecraft: Bedrock Edition " . Colors::AQUA . "v" . $this->getMinecraftVersion());
 
 		$this->playerManager = new PlayerManager();
 
