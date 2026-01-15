@@ -97,10 +97,10 @@ jobs:
         id: prerelease
         run: |
           if [[ "${{ steps.version.outputs.IS_DEV }}" == "true" ]]; then
-           echo PRERELEASE=true >> $GITHUB_OUTPUT
-         else
-           echo PRERELEASE=false >> $GITHUB_OUTPUT
-         fi
+            echo "PRERELEASE=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "PRERELEASE=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Create draft release
         uses: ncipollo/release-action@v1
