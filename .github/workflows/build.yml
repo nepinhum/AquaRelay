@@ -9,7 +9,7 @@ on:
       php-version:
         description: 'PHP version'
         required: false
-        default: '8.2'
+        default: '812'
 
 jobs:
   build:
@@ -22,7 +22,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ inputs.php-version || '8.2' }}
+          php-version: ${{ inputs.php-version || '8.1' }}
           tools: composer
           coverage: none
 
