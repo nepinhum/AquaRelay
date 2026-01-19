@@ -50,7 +50,8 @@ function checkDependencies(): void
 
 	$required = [
 		"yaml",
-		"sockets"
+		"sockets",
+		"phar"
 	];
 
 	foreach ($required as $depend) {

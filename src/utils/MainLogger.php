@@ -25,6 +25,7 @@ namespace aquarelay\utils;
 
 use pmmp\thread\Thread as NativeThread;
 use pmmp\thread\ThreadSafe;
+use Symfony\Component\Filesystem\Path;
 
 class MainLogger extends ThreadSafe implements \Logger
 {
@@ -33,7 +34,7 @@ class MainLogger extends ThreadSafe implements \Logger
 	private MainLoggerThread $writerThread;
 
 	public function __construct(private string $mainThreadName, string $logFile = "proxy.log", private bool $debugMode = false) {
-		$this->writerThread = new MainLoggerThread($logFile);
+		$this->writerThread = new MainLoggerThread($logFile, Path::join(\aquarelay\DATA_PATH, "logs"));
 		$this->writerThread->start(NativeThread::INHERIT_NONE);
 	}
 

@@ -21,32 +21,39 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\player;
+namespace aquarelay\config;
 
-use aquarelay\utils\LoginData;
+use aquarelay\utils\InstanceTrait;
 
-class PlayerManager {
-	/** @var Player[] */
-	private array $players = [];
+class ConfigUpdater {
 
-	public function createPlayer($session, LoginData $data): Player {
-		$player = new Player($session, $data);
-		$this->players[spl_object_hash($session)] = $player;
-		return $player;
-	}
+	use InstanceTrait;
 
-	public function getPlayerBySession($session): ?Player {
-		return $this->players[spl_object_hash($session)] ?? null;
-	}
+	public const CONFIG_VERSION = 1;
 
-	public function removePlayer($session): void {
-		if (!is_null($this->getPlayerBySession($session))) {
-			unset($this->players[spl_object_hash($session)]);
-		}
-	}
-
-	public function all() : array
+	public function isUpToDate(int $configVersion) : bool
 	{
-		return array_values($this->players);
+		return $configVersion >= self::CONFIG_VERSION;
+	}
+
+	public function update(array $current, array $config) : array {
+		foreach ($config as $key => $value) {
+			if (!array_key_exists($key, $current)) {
+				$current[$key] = $value;
+				continue;
+			}
+
+			if (is_array($value) && is_array($current[$key])) {
+				$current[$key] = self::update($current[$key], $value);
+			}
+		}
+
+		foreach ($current as $key => $_) {
+			if (!array_key_exists($key, $config)) {
+				unset($current[$key]);
+			}
+		}
+
+		return $current;
 	}
 }
