@@ -56,7 +56,7 @@ class LoginHandler extends PacketHandler {
 			return false;
 		}
 
-		$this->session->onClientLoginSuccess($packet);
+		$this->session->onClientLoginSuccess();
 		return true;
 	}
 

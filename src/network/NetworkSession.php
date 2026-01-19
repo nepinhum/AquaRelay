@@ -50,7 +50,7 @@ use Ramsey\Uuid\Uuid;
 class NetworkSession {
 	/** @var string[] */
 	private array $sendBuffer = [];
-	private bool $enableCompression = false;
+	private ?bool $enableCompression = null;
 	private int $lastUsed;
 	private ?string $username = null;
 	private ?int $ping = null;
@@ -135,11 +135,12 @@ class NetworkSession {
 			$batchData = $stream->getData();
 			$this->sendBuffer = [];
 
-			if (!$this->enableCompression) {
-				$finalPayload = "\x00" . $batchData;
+			if (is_null($this->enableCompression)) {
+				$finalPayload = $batchData;
 			} else {
-				$compressor = ZlibCompressor::getInstance();
-				$finalPayload = "\x01" . $compressor->compress($batchData);
+				$finalPayload = $this->enableCompression
+					? "\x01" . ZlibCompressor::getInstance()->compress($batchData)
+					: "\x00" . $batchData;
 			}
 
 			$this->sendEncoded($finalPayload);
@@ -166,7 +167,7 @@ class NetworkSession {
 		$this->setHandler(new LoginHandler($this, $this->server->getLogger()));
 	}
 
-	public function onClientLoginSuccess(LoginPacket $loginPacket): void {
+	public function onClientLoginSuccess(): void {
 		$this->debug("Login handled. Starting Resource Pack sequence...");
 
 		$this->sendDataPacket(PlayStatusPacket::create(PlayStatusPacket::LOGIN_SUCCESS));
