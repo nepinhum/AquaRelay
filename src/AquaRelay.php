@@ -31,7 +31,9 @@ use function version_compare;
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 if (Colors::supportsColors()){
-	@sapi_windows_vt100_support(STDOUT, true);
+	if (PHP_OS_FAMILY === "Windows" && function_exists('\sapi_windows_vt100_support')) {
+		@\sapi_windows_vt100_support(STDOUT, true);
+	}
 }
 
 function error(string $message) : void
