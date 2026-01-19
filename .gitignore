@@ -16,4 +16,5 @@ vendor/*
 config.yml
 *.log
 AquaRelay.phar
-logs
+log
+plugins
