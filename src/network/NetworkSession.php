@@ -139,8 +139,8 @@ class NetworkSession {
 				$finalPayload = $batchData;
 			} else {
 				$finalPayload = $this->enableCompression
-					? "\x01" . ZlibCompressor::getInstance()->compress($batchData)
-					: "\x00" . $batchData;
+					? "\x00" . ZlibCompressor::getInstance()->compress($batchData)
+					: "\xff" . $batchData;
 			}
 
 			$this->sendEncoded($finalPayload);
