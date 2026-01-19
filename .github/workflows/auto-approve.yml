@@ -22,7 +22,7 @@ jobs:
         with:
           app-id: ${{ vars.RESTRICTED_ACTIONS_APP_ID }}
           private-key: ${{ secrets.RESTRICTED_ACTIONS_APP_KEY }}
-          owner: ${{ github.repository_owner }}
+          owner: pmmp
           repositories: RestrictedActions
 
       - name: Dispatch restricted action
