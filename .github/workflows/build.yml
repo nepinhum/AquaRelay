@@ -1,4 +1,4 @@
-name: PHP Composer Build
+name: AquaRelay Build
 
 on:
   push:
