@@ -31,15 +31,14 @@ use aquarelay\network\handler\ResourcePackHandler;
 use aquarelay\network\raklib\client\BackendRakClient;
 use aquarelay\player\Player;
 use aquarelay\ProxyServer;
-use pmmp\encoding\ByteBuffer;
 use pmmp\encoding\ByteBufferWriter;
-use pmmp\encoding\VarInt;
 use pmmp\encoding\ByteBufferReader;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
 use pocketmine\network\mcpe\protocol\DisconnectPacket;
 use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\PacketPool;
 use pocketmine\network\mcpe\protocol\PlayStatusPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\ResourcePacksInfoPacket;
 use pocketmine\network\mcpe\protocol\serializer\PacketBatch;
 use pocketmine\network\mcpe\protocol\types\CompressionAlgorithm;
@@ -52,6 +51,7 @@ class NetworkSession {
 	private array $sendBuffer = [];
 	private ?bool $enableCompression = null;
 	private int $lastUsed;
+	private ?int $protocolId = null;
 	private ?string $username = null;
 	private ?int $ping = null;
 	private bool $connected = true;
@@ -103,7 +103,7 @@ class NetworkSession {
 		$packet = $this->packetPool->getPacket($buffer);
 		if($packet !== null){
 			$this->debug("Incoming packet: " . $packet->getName());
-			$packet->decode(new ByteBufferReader($buffer));
+			$packet->decode(new ByteBufferReader($buffer), ProtocolInfo::CURRENT_PROTOCOL);
 
 			if($this->handler !== null){
 				$packet->handle($this->handler);
@@ -113,11 +113,19 @@ class NetworkSession {
 		}
 	}
 
+	public function setProtocolId(int $protocolId) : void{
+		$this->protocolId = $protocolId;
+	}
+
+	public function getProtocolId() : int{
+		return $this->protocolId ?? ProtocolInfo::CURRENT_PROTOCOL;
+	}
+
 	public function sendDataPacket(ClientboundPacket $packet, bool $immediate = false) : void {
 		$this->debug("Sending packet: " . $packet->getName());
 		$writer = new ByteBufferWriter();
 
-		$packet->encode($writer);
+		$packet->encode($writer, ProtocolInfo::CURRENT_PROTOCOL);
 		$payload = $writer->getData();
 
 		$this->addToSendBuffer($payload);
@@ -172,14 +180,18 @@ class NetworkSession {
 
 		$this->sendDataPacket(PlayStatusPacket::create(PlayStatusPacket::LOGIN_SUCCESS));
 
-		$infoPacket = ResourcePacksInfoPacket::create(
-			[],
-			false,
-			false,
-			false,
-			Uuid::fromString(Uuid::NIL),
-			"0.0.0",
-			false,
+		$infoPacket = 
+		ResourcePacksInfoPacket::create(
+			resourcePackEntries: [],
+			behaviorPackEntries: [],
+			mustAccept: false,
+			hasAddons: false,
+			hasScripts: false,
+			forceServerPacks: false,
+			cdnUrls: [],
+			worldTemplateId: Uuid::fromString(Uuid::NIL),
+			worldTemplateVersion: "",
+			forceDisableVibrantVisuals: true,
 		);
 
 		$this->sendDataPacket($infoPacket, true);
@@ -204,7 +216,7 @@ class NetworkSession {
 				$packetData = substr($payload, 1);
 				$packet = $this->packetPool->getPacket($packetData);
 				if ($packet !== null) {
-					$packet->decode(new ByteBufferReader($packetData));
+					$packet->decode(new ByteBufferReader($packetData), ProtocolInfo::CURRENT_PROTOCOL);
 
 					$player->handleBackendPacket($packet);
 				}

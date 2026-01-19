@@ -21,18 +21,12 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\utils;
+namespace aquarelay\plugin;
 
-use Ramsey\Uuid\UuidInterface;
+use Exception;
 
-class LoginData {
-	public function __construct(
-		public readonly string $username,
-		public readonly UuidInterface $Uuid,
-		public readonly string $xuid,
-		public readonly array $chainData,   // JWT Chain
-		public readonly string $clientData, // JWT Client
-		public readonly int $protocolVersion,
-		public int $clientSubId = 0
-	) {}
+/**
+ * Exception for plugin-related errors
+ */
+class PluginException extends Exception {
 }
