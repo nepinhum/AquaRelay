@@ -51,7 +51,7 @@ class ProxyLoop {
 	}
 
 	private function tick() : void {
-		$this->server->interface->process();
+		$this->server->interface->tick();
 
 		foreach($this->sessions as $session) {
 			$player = $session->getPlayer();
@@ -94,6 +94,7 @@ class ProxyLoop {
 	private function handleDisconnect(int $sessionId, string $reason): void {
 		$this->server->getLogger()->info("Client disconnected: $reason");
 		NetworkSessionManager::getInstance()->remove($this->sessions[$sessionId]);
+		$this->server->getPlayerManager()->removePlayer($sessionId);
 		unset($this->sessions[$sessionId]);
 	}
 

@@ -37,6 +37,8 @@ use raklib\server\ServerEventListener;
 
 class RakLibInterface implements ServerEventListener {
 
+	private int $tickCounter = 0;
+
 	const MCPE_RAKNET_PACKET_ID = "\xfe";
 	const RAKNET_PROTOCOL_VERSION = 11;
 
@@ -83,8 +85,14 @@ class RakLibInterface implements ServerEventListener {
 		$this->thread->start(NativeThread::INHERIT_NONE);
 	}
 
-	public function process(): void {
+	public function tick() : void {
 		while($this->eventReceiver->handle($this));
+
+		if (++$this->tickCounter >= 20) {
+			$this->tickCounter = 0;
+			$server = ProxyServer::getInstance();
+			$this->setName($server->getMotd(), $server->getSubMotd());
+		}
 	}
 
 	public function sendPacket(int $sessionId, string $payload, bool $immediate = true, ?int $receiptId = null): void {
@@ -135,14 +143,15 @@ class RakLibInterface implements ServerEventListener {
 
 	public function setName(string $name, string $subMotd) : void
 	{
-		$config = ProxyServer::getInstance()->getConfig();
+		$server = ProxyServer::getInstance();
+		$config = $server->getConfig();
 		$this->interface->setName(implode(";",
 				[
 					"MCPE",
 					rtrim(addcslashes($name, ";"), '\\'),
 					ProtocolInfo::CURRENT_PROTOCOL,
 					ProtocolInfo::MINECRAFT_VERSION_NETWORK,
-					0, // TODO
+					$server->getOnlinePlayerCount(),
 					$config->getGameSettings()->getMaxPlayers(),
 					$this->rakServerId,
 					$subMotd,

@@ -97,6 +97,24 @@ class ProxyServer {
 	}
 
 	/**
+	 * Returns all online proxied players
+	 * @return array
+	 */
+	public function getOnlinePlayers() : array
+	{
+		return $this->playerManager->all();
+	}
+
+	/**
+	 * Returns count of online proxied players
+	 * @return int
+	 */
+	public function getOnlinePlayerCount() : int
+	{
+		return count($this->getOnlinePlayers());
+	}
+
+	/**
 	 * Returns the latest supported version of Minecraft
 	 * @return string
 	 */

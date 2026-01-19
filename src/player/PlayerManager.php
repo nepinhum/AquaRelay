@@ -40,6 +40,13 @@ class PlayerManager {
 	}
 
 	public function removePlayer($session): void {
-		unset($this->players[spl_object_hash($session)]);
+		if (!is_null($this->getPlayerBySession($session))) {
+			unset($this->players[spl_object_hash($session)]);
+		}
+	}
+
+	public function all() : array
+	{
+		return array_values($this->players);
 	}
 }
