@@ -205,9 +205,7 @@ class ProxyServer {
 
 		$selectedLang = $this->getConfig()->getMiscSettings()->getSelectedLanguage();
 		$this->language = new Language($selectedLang);
-		$this->logger->info(TranslationFactory::translate(TranslationKeys::LANGUAGE_SELECTED, [
-			$this->language->getFullName(), $this->language->getLang()
-		]));
+		$this->logger->info(TranslationFactory::languageSelected($this->language->getFullName(), $this->language->getLang()));
 
 		if (self::IS_DEVELOPMENT){
 			$this->logger->warning("You are using development build. Be careful, your progress may be lost in future.");

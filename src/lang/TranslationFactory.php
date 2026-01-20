@@ -32,5 +32,10 @@ class TranslationFactory
 		return ProxyServer::getInstance()->getLanguage()->translate($key, $args);
 	}
 
-	// TODO : Known translations
+	public static function languageSelected(string $fullName, string $code): string
+	{
+		return ProxyServer::getInstance()->getLanguage()->translate(TranslationKeys::LANGUAGE_SELECTED, [
+			$fullName, $code
+		]);
+	}
 }
