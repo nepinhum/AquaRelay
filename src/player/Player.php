@@ -23,8 +23,10 @@ declare(strict_types=1);
 
 namespace aquarelay\player;
 
+use aquarelay\network\NetworkSession;
 use aquarelay\network\raklib\client\BackendRakClient;
 use aquarelay\utils\LoginData;
+use pocketmine\network\mcpe\protocol\ClientboundPacket;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\StartGamePacket;
@@ -39,12 +41,12 @@ class Player
 	public ?int $backendRuntimeId = null;
 	protected string $xuid = "";
 
-	private $upstreamSession;
+	private NetworkSession $upstreamSession;
 	private ?BackendRakClient $downstreamConnection = null;
 
 	private LoginData $loginData;
 
-	public function __construct($upstreamSession, LoginData $loginData) {
+	public function __construct(NetworkSession $upstreamSession, LoginData $loginData) {
 		$this->upstreamSession = $upstreamSession;
 		$this->loginData = $loginData;
         $this->xuid = $loginData->xuid;
@@ -52,8 +54,8 @@ class Player
 		$this->proxyRuntimeId = mt_rand(10000, 50000);
 	}
 
-	public function sendPacket(DataPacket $packet): void {
-		$this->upstreamSession->sendPacket($packet);
+	public function sendDataPacket(ClientboundPacket $packet): void {
+		$this->upstreamSession->sendDataPacket($packet);
 	}
 
 	public function sendToBackend(DataPacket $packet): void {
@@ -97,6 +99,6 @@ class Player
 			$packet->runtimeEntityId = $this->proxyRuntimeId;
 		}
 
-		$this->sendPacket($packet);
+		$this->sendDataPacket($packet);
 	}
 }
