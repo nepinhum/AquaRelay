@@ -70,7 +70,8 @@ class ProxyConfig {
 			new GameSettings(
 				(int) $gameSettings["max-players"],
 				$gameSettings["motd"],
-				$gameSettings["sub-motd"]
+				$gameSettings["sub-motd"],
+				(bool) $gameSettings["xbox-auth"]
 			),
 		);
 	}

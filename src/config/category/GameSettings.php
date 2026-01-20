@@ -28,7 +28,8 @@ final class GameSettings {
 	public function __construct(
 		private int $maxPlayers,
 		private string $motd,
-		private string $subMotd
+		private string $subMotd,
+		private bool $xboxauth
 	){}
 
 	public function getMaxPlayers() : int {
@@ -53,5 +54,13 @@ final class GameSettings {
 
 	public function setSubMotd(string $subMotd) : void {
 		$this->subMotd = $subMotd;
+	}
+
+	public function getXboxAuth(): bool {
+		return $this->xboxauth;
+	}
+
+	public function setXboxAuth(bool $value): void {
+		$this->xboxauth = $value;
 	}
 }

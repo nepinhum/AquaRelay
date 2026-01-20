@@ -37,6 +37,12 @@ use pocketmine\network\mcpe\protocol\types\login\legacy\LegacyAuthIdentityData;
 use pocketmine\network\mcpe\protocol\types\login\openid\XboxAuthJwtBody;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
+use ReflectionClass;
+use Closure;
+use Exception;
+use JsonException;
+use JsonMapper;
+use JsonMapper_Exception;
 
 class LoginHandler extends PacketHandler {
 
@@ -54,6 +60,11 @@ class LoginHandler extends PacketHandler {
 		}
 
 		if($authInfo->AuthenticationType === AuthenticationType::FULL->value){
+			if (!ProxyServer::getInstance()->getConfig()->getGameSettings()->getXboxAuth()) {
+				$this->session->disconnect("Login failed: You must be signed in to Xbox Live to join this server.");
+				return false;
+			}
+
 		try {
 			[, $clientDataClaims, ] = JWTUtils::parse($authInfo->Token);
 			$clientData = $this->mapXboxTokenBody($clientDataClaims);
@@ -73,14 +84,14 @@ class LoginHandler extends PacketHandler {
 			$this->session->setPlayer($player);
 
 			$this->logger->info("Player login received: " . $this->session->getUsername());
-		} catch (\Exception $e) {
+		} catch (Exception $e) {
 			$this->session->disconnect("Login decode error: " . $e->getMessage());
 			return false;
 		}
 		}elseif($authInfo->AuthenticationType === AuthenticationType::SELF_SIGNED->value){
 			try{
 				$chainData = json_decode($authInfo->Certificate, flags: JSON_THROW_ON_ERROR);
-			}catch(\JsonException $e){
+			}catch(JsonException $e){
 				throw PacketHandlingException::wrap($e, "Error parsing self-signed certificate chain");
 			}
 			if(!is_object($chainData)){
@@ -88,7 +99,7 @@ class LoginHandler extends PacketHandler {
 			}
 			try{
 				$chain = $this->defaultJsonMapper("Self-signed auth chain JSON")->map($chainData, new LegacyAuthChain());
-			}catch(\JsonMapper_Exception $e){
+			}catch(JsonMapper_Exception $e){
 				throw PacketHandlingException::wrap($e, "Error mapping self-signed certificate chain");
 			}
 			if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_93){
@@ -133,7 +144,7 @@ class LoginHandler extends PacketHandler {
 
 			try{
 				$claims = $this->defaultJsonMapper("Self-signed auth JWT 'extraData'")->map($claimsArray["extraData"], new LegacyAuthIdentityData());
-			}catch(\JsonMapper_Exception $e){
+			}catch(JsonMapper_Exception $e){
 				throw PacketHandlingException::wrap($e, "Error mapping self-signed certificate extraData");
 			}
 
@@ -168,7 +179,7 @@ class LoginHandler extends PacketHandler {
 	protected function parseAuthInfo(string $authInfo) : AuthenticationInfo{
 		try{
 			$authInfoJson = json_decode($authInfo, associative: false, flags: JSON_THROW_ON_ERROR);
-		}catch(\JsonException $e){
+		}catch(JsonException $e){
 			throw PacketHandlingException::wrap($e);
 		}
 		if(!is_object($authInfoJson)){
@@ -178,14 +189,14 @@ class LoginHandler extends PacketHandler {
 		$mapper = $this->defaultJsonMapper("Root authentication info JSON");
 		try{
 			$clientData = $mapper->map($authInfoJson, new AuthenticationInfo());
-		}catch(\JsonMapper_Exception $e){
+		}catch(JsonMapper_Exception $e){
 			throw PacketHandlingException::wrap($e);
 		}
 		return $clientData;
 	}
 
-	private function defaultJsonMapper(string $logContext) : \JsonMapper{
-		$mapper = new \JsonMapper();
+	private function defaultJsonMapper(string $logContext) : JsonMapper{
+		$mapper = new JsonMapper();
 		$mapper->bExceptionOnMissingData = true;
 		$mapper->undefinedPropertyHandler = $this->warnUndefinedJsonPropertyHandler($logContext);
 		$mapper->bStrictObjectTypeChecking = true;
@@ -202,7 +213,7 @@ class LoginHandler extends PacketHandler {
 		$mapper = $this->defaultJsonMapper("OpenID JWT body");
 		try{
 			$header = $mapper->map($bodyArray, new XboxAuthJwtBody());
-		}catch(\JsonMapper_Exception $e){
+		}catch(JsonMapper_Exception $e){
 			throw PacketHandlingException::wrap($e);
 		}
 		return $header;
@@ -217,11 +228,11 @@ class LoginHandler extends PacketHandler {
 	}
 
 	/**
-	 * @phpstan-return \Closure(object, string, mixed) : void
+	 * @phpstan-return Closure(object, string, mixed) : void
 	 */
-	private function warnUndefinedJsonPropertyHandler(string $context) : \Closure{
+	private function warnUndefinedJsonPropertyHandler(string $context) : Closure{
 		return fn(object $object, string $name, mixed $value) => ProxyServer::getInstance()->getLogger()->warning(
-			"$context: Unexpected JSON property for " . (new \ReflectionClass($object))->getShortName() . ": " . $name . " = " . var_export($value, return: true)
+			"$context: Unexpected JSON property for " . (new ReflectionClass($object))->getShortName() . ": " . $name . " = " . var_export($value, return: true)
 		);
 	}
 }
