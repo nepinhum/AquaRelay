@@ -19,6 +19,7 @@ network-settings:
 misc-settings:
   debug-mode: false # Enables debug logging for development and troubleshooting
   log-name: proxy.log # File name used for proxy log output
+  language: eng # Selected language for the runtime process
 
 game-settings:
   max-players: 50 # Maximum number of players allowed to connect

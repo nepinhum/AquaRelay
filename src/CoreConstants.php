@@ -35,3 +35,4 @@ define('aquarelay\_CORE_CONSTANTS_INCLUDED', true);
 define('aquarelay\PATH', dirname(__DIR__) . '/');
 define('aquarelay\RESOURCE_PATH', dirname(__DIR__) . '/resources/');
 define('aquarelay\DATA_PATH', getcwd() . '/');
+define('aquarelay\LOCALE_DATA_PATH', dirname(__DIR__) . '/resources/languages/');

@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace aquarelay\network\handler;
 
+use aquarelay\lang\TranslationFactory;
+use aquarelay\lang\TranslationKeys;
 use aquarelay\network\PacketHandlingException;
 use aquarelay\ProxyServer;
 use aquarelay\utils\JWTException;
@@ -61,7 +63,7 @@ class LoginHandler extends PacketHandler {
 
 		if($authInfo->AuthenticationType === AuthenticationType::FULL->value){
 			if (!ProxyServer::getInstance()->getConfig()->getGameSettings()->getXboxAuth()) {
-				$this->session->disconnect("Login failed: You must be signed in to Xbox Live to join this server.");
+				$this->session->disconnect(TranslationFactory::translate("session.login.failed"));
 				return false;
 			}
 

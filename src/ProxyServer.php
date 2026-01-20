@@ -24,6 +24,9 @@ declare(strict_types=1);
 namespace aquarelay;
 
 use aquarelay\config\ProxyConfig;
+use aquarelay\lang\Language;
+use aquarelay\lang\TranslationFactory;
+use aquarelay\lang\TranslationKeys;
 use aquarelay\network\compression\ZlibCompressor;
 use aquarelay\network\ProxyLoop;
 use aquarelay\network\raklib\RakLibInterface;
@@ -45,6 +48,7 @@ class ProxyServer {
 	public RakLibInterface $interface;
 	private MainLogger $logger;
 	private ProxyConfig $config;
+	private Language $language;
 	private static ?self $instance = null;
 	private PlayerManager $playerManager;
 	private PluginManager $pluginManager;
@@ -68,6 +72,11 @@ class ProxyServer {
 	public function getConfig() : ProxyConfig
 	{
 		return $this->config;
+	}
+
+	public function getLanguage() : Language
+	{
+		return $this->language;
 	}
 
 	public function getLogger() : MainLogger
@@ -197,6 +206,10 @@ class ProxyServer {
 		}
 		$this->config = ProxyConfig::load($configFile);
 		$this->logger = new MainLogger("Main Thread", $this->getConfig()->getMiscSettings()->getLogName(), $this->isDebug());
+
+		$selectedLang = $this->getConfig()->getMiscSettings()->getSelectedLanguage();
+		$this->language = new Language($selectedLang);
+		$this->logger->info(TranslationFactory::languageSelected($this->language->getFullName(), $this->language->getLang()));
 
 		if (self::IS_DEVELOPMENT){
 			$this->logger->warning("You are using development build. Be careful, your progress may be lost in future.");
