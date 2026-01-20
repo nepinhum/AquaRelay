@@ -86,7 +86,7 @@ function start() : void
 			RESOURCE_PATH
 		);
 	} catch(Throwable $e) {
-		error($e->getMessage());
+		error($e->getMessage() . "\n" . $e->getTraceAsString());
 		exit(1);
 	}
 }
