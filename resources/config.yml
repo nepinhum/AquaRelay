@@ -27,4 +27,4 @@ game-settings:
   sub-motd: "www.aquarelay.dev" # Secondary MOTD shown below the main one
   xbox-auth: true # If enabled, only players which are authenticated with XBOX Live can join. If disabled, anyone can connect with any name
 
-config-version: 1 # Do not change this.
+config-version: 2 # Do not change this.
