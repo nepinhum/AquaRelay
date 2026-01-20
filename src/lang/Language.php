@@ -49,7 +49,7 @@ class Language
 
 	public function getFullName(): string
 	{
-		return $this->translate(TranslationKeys::LANGUAGE_NAME);
+		return $this->translate("name");
 	}
 
 	public function getLang(): string

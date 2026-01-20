@@ -63,7 +63,7 @@ class LoginHandler extends PacketHandler {
 
 		if($authInfo->AuthenticationType === AuthenticationType::FULL->value){
 			if (!ProxyServer::getInstance()->getConfig()->getGameSettings()->getXboxAuth()) {
-				$this->session->disconnect(TranslationFactory::translate(TranslationKeys::SESSION_LOGIN_FAILED));
+				$this->session->disconnect(TranslationFactory::translate("session.login.failed"));
 				return false;
 			}
 
