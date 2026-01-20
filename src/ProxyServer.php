@@ -70,7 +70,7 @@ class ProxyServer {
 		return $this->config;
 	}
 
-	public function getLanguage(): Language
+	public function getLanguage() : Language
 	{
 		return $this->language;
 	}

@@ -47,13 +47,11 @@ final class MiscSettings {
 		$this->logName = $logName;
 	}
 
-	public function getSelectedLanguage(): string
-	{
+	public function getSelectedLanguage() : string {
 		return $this->selectedLanguage;
 	}
 
-	public function setSelectedLanguage(string $selectedLanguage): void
-	{
+	public function setSelectedLanguage(string $selectedLanguage) : void {
 		$this->selectedLanguage = $selectedLanguage;
 	}
 }
