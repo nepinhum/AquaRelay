@@ -73,7 +73,7 @@ class LoginHandler extends PacketHandler {
 
 			$loginData = new LoginData(
 				username: $clientData->xname,
-				Uuid: self::calculateUuidFromXuid($clientData->xid),
+				uuid: self::calculateUuidFromXuid($clientData->xid),
 				xuid: $clientData->xid,
 				chainData: json_decode($packet->authInfoJson, true),
 				clientData: $packet->clientDataJwt,
@@ -159,7 +159,7 @@ class LoginHandler extends PacketHandler {
 
 			$loginData = new LoginData(
 				username: $username,
-				Uuid: $legacyUuid,
+				uuid: $legacyUuid,
 				xuid: $xuid,
 				chainData: json_decode($authInfo->Certificate, true),
 				clientData: $packet->clientDataJwt,

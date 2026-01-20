@@ -28,7 +28,7 @@ use Ramsey\Uuid\UuidInterface;
 class LoginData {
 	public function __construct(
 		public readonly string $username,
-		public readonly UuidInterface $Uuid,
+		public readonly UuidInterface $uuid,
 		public readonly string $xuid,
 		public readonly array $chainData,   // JWT Chain
 		public readonly string $clientData, // JWT Client

@@ -50,7 +50,7 @@ class Player
 		$this->upstreamSession = $upstreamSession;
 		$this->loginData = $loginData;
         $this->xuid = $loginData->xuid;
-		$this->uuid = $loginData->Uuid;
+		$this->uuid = $loginData->uuid;
 		$this->proxyRuntimeId = mt_rand(10000, 50000);
 	}
 
