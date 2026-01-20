@@ -65,7 +65,8 @@ class ProxyConfig {
 			),
 			new MiscSettings(
 				(bool) $miscSettings["debug-mode"],
-				$miscSettings["log-name"]
+				$miscSettings["log-name"],
+				$miscSettings["language"]
 			),
 			new GameSettings(
 				(int) $gameSettings["max-players"],

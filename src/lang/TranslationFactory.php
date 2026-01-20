@@ -21,39 +21,16 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\config\category;
+namespace aquarelay\lang;
 
-final class MiscSettings {
+use aquarelay\ProxyServer;
 
-	public function __construct(
-		private bool $debugMode,
-		private string $logName,
-		private string $selectedLanguage
-	){}
-
-	public function isDebugMode() : bool {
-		return $this->debugMode;
-	}
-
-	public function setDebugMode(bool $debugMode) : void {
-		$this->debugMode = $debugMode;
-	}
-
-	public function getLogName() : string {
-		return $this->logName;
-	}
-
-	public function setLogName(string $logName) : void {
-		$this->logName = $logName;
-	}
-
-	public function getSelectedLanguage(): string
+class TranslationFactory
+{
+	public static function translate(string $key, array $args = []): string
 	{
-		return $this->selectedLanguage;
+		return ProxyServer::getInstance()->getLanguage()->translate($key, $args);
 	}
 
-	public function setSelectedLanguage(string $selectedLanguage): void
-	{
-		$this->selectedLanguage = $selectedLanguage;
-	}
+	// TODO : Known translations
 }

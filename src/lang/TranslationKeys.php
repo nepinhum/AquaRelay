@@ -21,39 +21,11 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\config\category;
+namespace aquarelay\lang;
 
-final class MiscSettings {
-
-	public function __construct(
-		private bool $debugMode,
-		private string $logName,
-		private string $selectedLanguage
-	){}
-
-	public function isDebugMode() : bool {
-		return $this->debugMode;
-	}
-
-	public function setDebugMode(bool $debugMode) : void {
-		$this->debugMode = $debugMode;
-	}
-
-	public function getLogName() : string {
-		return $this->logName;
-	}
-
-	public function setLogName(string $logName) : void {
-		$this->logName = $logName;
-	}
-
-	public function getSelectedLanguage(): string
-	{
-		return $this->selectedLanguage;
-	}
-
-	public function setSelectedLanguage(string $selectedLanguage): void
-	{
-		$this->selectedLanguage = $selectedLanguage;
-	}
+class TranslationKeys
+{
+	public const LANGUAGE_NAME = "name";
+	public const LANGUAGE_SELECTED = "language.selected";
+	public const SESSION_LOGIN_FAILED = "session.login.failed";
 }
