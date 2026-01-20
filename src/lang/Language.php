@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace aquarelay\lang;
 
+use aquarelay\ProxyServer;
 use Symfony\Component\Filesystem\Path;
 
 /**
@@ -42,8 +43,8 @@ class Language
 	public function __construct(string $lang)
 	{
 		$this->langName = strtolower($lang);
-		$this->translations = $this->loadLang(\aquarelay\LOCALE_DATA_PATH, $this->langName);
 		$this->defaultTranslations = $this->loadLang(\aquarelay\LOCALE_DATA_PATH, self::DEFAULT_LANGUAGE);
+		$this->translations = $this->loadLang(\aquarelay\LOCALE_DATA_PATH, $this->langName);
 	}
 
 	public function getFullName(): string
@@ -60,11 +61,16 @@ class Language
 	{
 		$file = Path::join($path, $languageName . ".ini");
 		if (!file_exists($file)) {
-			throw new LanguageNotFoundException("Language \"$languageName\" not found");
+			if ($languageName == self::DEFAULT_LANGUAGE) {
+				throw new LanguageNotFoundException("Language \"$languageName\" not found");
+			} else {
+				ProxyServer::getInstance()->getLogger()->warning("Language file \"$file\" not found");
+				$this->langName = self::DEFAULT_LANGUAGE;
+				return [];
+			}
 		}
 
-		$data = parse_ini_file($file, false, INI_SCANNER_RAW);
-		return is_array($data) ? $data : [];
+		return LanguageParser::parseFile($file);
 	}
 
 	public function translate(string $key, array $args = []): string
