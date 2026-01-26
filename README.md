@@ -76,10 +76,7 @@ AquaRelay acts as a transparent layer between clients and backend servers.
 ### Running from source
 
 ```bash
-git clone https://github.com/AquaRelay/AquaRelay.git
-cd AquaRelay
-composer install
-php AquaRelay.php
+ composer require aquarelay/aquarelay
 ```
 
 ### Contributing
