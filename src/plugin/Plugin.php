@@ -25,8 +25,14 @@ declare(strict_types=1);
 namespace aquarelay\plugin;
 
 use aquarelay\config\Config;
+use aquarelay\event\HandlerList;
+use aquarelay\event\Listener;
 use aquarelay\ProxyServer;
 use aquarelay\task\TaskScheduler;
+
+use function copy;
+use function dirname;
+use function file_exists;
 use function is_dir;
 use function mkdir;
 use const DIRECTORY_SEPARATOR;
@@ -157,7 +163,32 @@ abstract class Plugin
 	}
 
 	/**
-	 * Gets the config object.
+	 * Saves a resource from the plugin's resources to the data folder.
+	 * * @param string $filename The name of the file (e.g., "config.yml")
+	 * @param bool $replace Whether to overwrite existing files
+	 */
+	public function saveResource(string $filename, bool $replace = false) : void
+	{
+		$source = dirname((new \ReflectionClass($this))->getFileName()) . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . $filename;
+		$destination = $this->dataFolder . DIRECTORY_SEPARATOR . $filename;
+
+		if (!file_exists($destination) || $replace) {
+			if (file_exists($source)) {
+				copy($source, $destination);
+			}
+		}
+	}
+
+	public function saveFile(string $file) : void {
+		$this->saveResource($file, false);
+	}
+
+	public function registerEvent(Listener $listener) : void {
+		HandlerList::register($listener);
+	}
+
+	/**
+	 * Gets the config object
 	 */
 	public function getConfig() : Config
 	{

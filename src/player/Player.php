@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace aquarelay\player;
 
+use aquarelay\form\Form;
+use aquarelay\form\FormValidationException;
 use aquarelay\lang\TranslationFactory;
 use aquarelay\network\handler\downstream\AbstractDownstreamPacketHandler;
 use aquarelay\network\handler\downstream\DownstreamResourcePackHandler;
@@ -40,6 +42,7 @@ use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\TransferPacket;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
+use function get_class;
 use function json_encode;
 
 class Player
@@ -50,6 +53,9 @@ class Player
 	private ?BackendRakClient $downstreamConnection = null;
 	private ?BackendServer $backendServer = null;
 	private ?AbstractDownstreamPacketHandler $handler = null;
+	protected int $formIdCounter = 0;
+	/** @var Form[] */
+	protected array $forms = [];
 
 	public function __construct(
 		private readonly ProxyServer    $proxyServer,
@@ -182,6 +188,51 @@ class Player
 	public function sendActionBar(string $actionBar) : void
 	{
 		$this->upstreamSession->onActionBar($actionBar);
+	}
+
+	/**
+	 * Sends a Form to the player, or queue to send it if a form is already open.
+	 *
+	 * @throws \InvalidArgumentException
+	 */
+	public function sendForm(Form $form) : void{
+		$id = $this->formIdCounter++;
+		if($this->getNetworkSession()->onFormSent($id, $form)){
+			$this->forms[$id] = $form;
+		}
+	}
+
+	public function onFormSubmit(int $formId, mixed $responseData) : bool{
+		if(!isset($this->forms[$formId])){
+			$this->getServer()->getLogger()->debug("Got unexpected response for form $formId");
+			return false;
+		}
+
+		try{
+			$this->forms[$formId]->handleResponse($this, $responseData);
+		}catch(FormValidationException $e){
+			$this->getServer()->getLogger()->critical("Failed to validate form " . get_class($this->forms[$formId]) . ": " . $e->getMessage());
+			$this->getServer()->getLogger()->logException($e);
+		}finally{
+			unset($this->forms[$formId]);
+		}
+
+		return true;
+	}
+
+	/**
+	 * @internal
+	 * Returns whether the server is waiting for a response for a form with the given ID.
+	 */
+	public function hasPendingForm(int $formId) : bool{
+		return isset($this->forms[$formId]);
+	}
+
+	/**
+	 * Closes the current viewing form and forms in queue.
+	 */
+	public function closeAllForms() : void{
+		$this->getNetworkSession()->onCloseAllForms();
 	}
 
 	public function disconnect(string $reason = 'Disconnected from proxy') : void

@@ -25,6 +25,8 @@ declare(strict_types=1);
 namespace aquarelay;
 
 use aquarelay\config\ProxyConfig;
+use aquarelay\event\default\ServerStartEvent;
+use aquarelay\event\default\ServerStopEvent;
 use aquarelay\lang\Language;
 use aquarelay\lang\TranslationFactory;
 use aquarelay\network\compression\ZlibCompressor;
@@ -148,6 +150,15 @@ class ProxyServer
 		$this->serverManager = new ServerManager($this->getConfig()->getServerSettings());
 
 		$this->logger->info('Proxy started! (' . round(microtime(true) - $this->startProcessTime, 3) . 's)');
+
+		$ev = new ServerStartEvent($this->startProcessTime);
+		$ev->call();
+
+		if ($ev->isCancelled()) {
+			$this->logger->warning('Server start cancelled by a plugin');
+			$this->shutdown();
+			return;
+		}
 
 		$this->proxyLoop = new ProxyLoop($this); // TODO: We can merge this into ProxyServer class
 		$this->getProxyLoop()->run();
@@ -297,6 +308,9 @@ class ProxyServer
 			/** @var Player $player */
 			$player->disconnect(TranslationFactory::translate('proxy.shutdown'));
 		}
+
+		$ev = new ServerStopEvent();
+		$ev->call();
 
 		foreach ($this->pluginManager->getPlugins() as $plugin) {
 			if ($plugin->isEnabled()) {
