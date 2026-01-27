@@ -22,19 +22,32 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\event\default;
+namespace aquarelay\utils;
 
-use aquarelay\event\Event;
+use pmmp\thread\Thread;
+use pmmp\thread\ThreadSafeArray;
+use function fgets;
+use function fopen;
+use function trim;
 
-class ServerStartEvent extends Event
+class ConsoleReaderThread extends Thread
 {
-	private float $startTime;
+    public function __construct(
+        private ThreadSafeArray $buffer
+    ) {}
 
-	public function __construct(float $startTime) {
-		$this->startTime = $startTime;
-	}
-
-	public function getStartTime() : float {
-		return $this->startTime;
-	}
+    public function run() : void
+    {
+        $stdin = fopen("php://stdin", "r");
+        
+        while (true) {
+            $line = fgets($stdin);
+            if ($line !== false) {
+                $trimmed = trim($line);
+                if ($trimmed !== "") {
+                    $this->buffer[] = $trimmed;
+                }
+            }
+        }
+    }
 }

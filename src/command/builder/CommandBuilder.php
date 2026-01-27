@@ -22,19 +22,21 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\event\default;
+namespace aquarelay\command\builder;
 
-use aquarelay\event\Event;
+readonly class CommandBuilder {
 
-class ServerStartEvent extends Event
-{
-	private float $startTime;
+	public function __construct(
+		private string  $name,
+		private string  $description = "",
+		private string  $usage = "",
+		private array   $aliases = [],
+		private ?string $permission = null
+	) {}
 
-	public function __construct(float $startTime) {
-		$this->startTime = $startTime;
-	}
-
-	public function getStartTime() : float {
-		return $this->startTime;
-	}
+	public function getName() : string { return $this->name; }
+	public function getDescription() : string { return $this->description; }
+	public function getUsage() : string { return $this->usage; }
+	public function getAliases() : array { return $this->aliases; }
+	public function getPermission() : ?string { return $this->permission; }
 }

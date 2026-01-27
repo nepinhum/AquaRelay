@@ -27,35 +27,33 @@ namespace aquarelay\config;
 use aquarelay\config\category\GameSettings;
 use aquarelay\config\category\MiscSettings;
 use aquarelay\config\category\NetworkSettings;
+use aquarelay\config\category\PermissionSettings;
 use aquarelay\config\category\ServerSettings;
 use Symfony\Component\Yaml\Yaml;
-use function file_put_contents;
 
-class ProxyConfig
+readonly class ProxyConfig
 {
 	public function __construct(
-		private readonly GameSettings $gameSettings,
-		private readonly ServerSettings $serverSettings,
-		private readonly MiscSettings $miscSettings,
-		private readonly NetworkSettings $networkSettings
+		private GameSettings       $gameSettings,
+		private ServerSettings     $serverSettings,
+		private PermissionSettings $permissionSettings,
+		private MiscSettings       $miscSettings,
+		private NetworkSettings    $networkSettings
 	) {}
 
-	public static function load(string $file) : self
+	public static function load(string $file, string $path) : self
 	{
 		$data = Yaml::parseFile($file);
-		$template = Yaml::parseFile(\aquarelay\RESOURCE_PATH . 'config.yml');
 
 		$configVersion = $data['config-version'] ?? 0;
 
 		if (!ConfigUpdater::getInstance()->isUpToDate($configVersion)) {
-			$data = ConfigUpdater::getInstance()->update($data, $template);
-			$data['config-version'] = ConfigUpdater::CONFIG_VERSION;
-
-			file_put_contents($file, Yaml::dump($data, 4, 2));
+			ConfigUpdater::getInstance()->update($file, $path);
 		}
 
 		$gameSettings = $data['game-settings'];
 		$serverSettings = $data['server-settings'];
+		$permissionSettings = $data['permissions'];
 		$miscSettings = $data['misc-settings'];
 		$networkSettings = $data['network-settings'];
 
@@ -70,10 +68,14 @@ class ProxyConfig
 				(array) $serverSettings["servers"],
 				$serverSettings['selection-strategy']
 			),
+			new PermissionSettings(
+				(array) $permissionSettings
+			),
 			new MiscSettings(
 				(bool) $miscSettings['debug-mode'],
 				$miscSettings['log-name'],
-				$miscSettings['language']
+				$miscSettings['language'],
+				(bool) $miscSettings['command-injection']
 			),
 			new NetworkSettings(
 				$networkSettings['bind']['address'],
@@ -93,6 +95,11 @@ class ProxyConfig
 	public function getServerSettings() : ServerSettings
 	{
 		return $this->serverSettings;
+	}
+
+	public function getPermissionSettings() : PermissionSettings
+	{
+		return $this->permissionSettings;
 	}
 
 	public function getMiscSettings() : MiscSettings

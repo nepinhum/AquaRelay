@@ -22,19 +22,21 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\event\default;
+namespace aquarelay\permission;
 
-use aquarelay\event\Event;
+use function strtolower;
 
-class ServerStartEvent extends Event
+final class PermissionAttachment
 {
-	private float $startTime;
+	private array $permissions = [];
 
-	public function __construct(float $startTime) {
-		$this->startTime = $startTime;
+	public function setPermission(string $permission, bool $value = true) : void
+	{
+		$this->permissions[strtolower($permission)] = $value;
 	}
 
-	public function getStartTime() : float {
-		return $this->startTime;
+	public function getPermissions() : array
+	{
+		return $this->permissions;
 	}
 }

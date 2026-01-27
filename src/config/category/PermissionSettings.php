@@ -22,19 +22,21 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\event\default;
+namespace aquarelay\config\category;
 
-use aquarelay\event\Event;
-
-class ServerStartEvent extends Event
+final class PermissionSettings
 {
-	private float $startTime;
+	public function __construct(
+		private array $players
+	) {}
 
-	public function __construct(float $startTime) {
-		$this->startTime = $startTime;
+	public function getPlayers() : array
+	{
+		return $this->players;
 	}
 
-	public function getStartTime() : float {
-		return $this->startTime;
+	public function setPlayers(array $players) : void
+	{
+		$this->players = $players;
 	}
 }

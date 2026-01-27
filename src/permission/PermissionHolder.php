@@ -22,19 +22,10 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\event\default;
+namespace aquarelay\permission;
 
-use aquarelay\event\Event;
-
-class ServerStartEvent extends Event
+interface PermissionHolder
 {
-	private float $startTime;
-
-	public function __construct(float $startTime) {
-		$this->startTime = $startTime;
-	}
-
-	public function getStartTime() : float {
-		return $this->startTime;
-	}
+	public function getName() : string;
+	public function hasPermission(string $permission) : bool;
 }

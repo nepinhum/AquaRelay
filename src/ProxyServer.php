@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace aquarelay;
 
+use aquarelay\command\sender\ConsoleCommandSender;
+use aquarelay\command\SimpleCommandMap;
 use aquarelay\config\ProxyConfig;
 use aquarelay\event\default\ServerStartEvent;
 use aquarelay\event\default\ServerStopEvent;
@@ -32,6 +34,7 @@ use aquarelay\lang\TranslationFactory;
 use aquarelay\network\compression\ZlibCompressor;
 use aquarelay\network\ProxyLoop;
 use aquarelay\network\raklib\RakLibInterface;
+use aquarelay\permission\PermissionManager;
 use aquarelay\player\Player;
 use aquarelay\player\PlayerManager;
 use aquarelay\plugin\PluginLoader;
@@ -39,9 +42,13 @@ use aquarelay\plugin\PluginManager;
 use aquarelay\server\ServerManager;
 use aquarelay\task\TaskScheduler;
 use aquarelay\utils\Colors;
+use aquarelay\utils\ConsoleReaderThread;
 use aquarelay\utils\MainLogger;
+use aquarelay\utils\SignalHandler;
 use aquarelay\utils\Utils;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
+use pmmp\thread\ThreadSafeArray;
+use pmmp\thread\Thread;
 use function count;
 use function file_exists;
 use function file_get_contents;
@@ -68,6 +75,12 @@ class ProxyServer
 	private TaskScheduler $taskScheduler;
 	private ProxyLoop $proxyLoop;
 	private ServerManager $serverManager;
+	private SimpleCommandMap $commandMap;
+	private PermissionManager $permissionManager;
+
+	private ConsoleCommandSender $consoleSender;
+
+	private ThreadSafeArray $consoleQueue;
 
 	private float $startProcessTime;
 
@@ -78,6 +91,13 @@ class ProxyServer
 		if (self::$instance !== null) {
 			throw new \LogicException('Server instance is already initialized');
 		}
+
+		$this->consoleSender = new ConsoleCommandSender($this);
+
+        $this->consoleQueue = new ThreadSafeArray();
+
+        $consoleThread = new ConsoleReaderThread($this->consoleQueue);
+        $consoleThread->start(Thread::INHERIT_ALL);
 
 		self::$instance = $this;
 		$this->startProcessTime = microtime(true);
@@ -99,7 +119,7 @@ class ProxyServer
 				throw new \RuntimeException('Failed to create config.yml. Please check permissions.');
 			}
 		}
-		$this->config = ProxyConfig::load($configFile);
+		$this->config = ProxyConfig::load($configFile, $this->resourcePath);
 		$this->logger = new MainLogger('Main Thread', $this->getConfig()->getMiscSettings()->getLogName(), $this->isDebug());
 
 		$selectedLang = $this->getConfig()->getMiscSettings()->getSelectedLanguage();
@@ -115,10 +135,14 @@ class ProxyServer
 		$this->logger->info('Starting ' . $this->getName() . ' version ' . $this->getVersion());
 		$this->logger->info('This server is running Minecraft: Bedrock Edition ' . Colors::AQUA . 'v' . $this->getMinecraftVersion());
 
+		$this->permissionManager = new PermissionManager($this->getConfig());
+		$this->commandMap = new SimpleCommandMap();
 		$this->playerManager = new PlayerManager();
 		$this->taskScheduler = new TaskScheduler();
 
 		register_shutdown_function([$this, 'shutdown']);
+
+		new SignalHandler(fn() => $this->shutdown());
 
 		$threshold = $this->getConfig()->getNetworkSettings()->getBatchThreshold();
 		$compressionThreshold = $threshold >= 0 ? $threshold : null;
@@ -137,7 +161,7 @@ class ProxyServer
 
 		$pluginsPath = $this->dataPath . 'plugins' . DIRECTORY_SEPARATOR;
 		if (!is_dir($pluginsPath)) {
-			@mkdir($pluginsPath, 0o755, true);
+			@mkdir($pluginsPath, 0755, true);
 		}
 		$pluginLoader = new PluginLoader($this, $pluginsPath);
 		$this->pluginManager = new PluginManager($this, $pluginLoader);
@@ -151,14 +175,8 @@ class ProxyServer
 
 		$this->logger->info('Proxy started! (' . round(microtime(true) - $this->startProcessTime, 3) . 's)');
 
-		$ev = new ServerStartEvent($this->startProcessTime);
-		$ev->call();
-
-		if ($ev->isCancelled()) {
-			$this->logger->warning('Server start cancelled by a plugin');
-			$this->shutdown();
-			return;
-		}
+		$event = new ServerStartEvent($this->startProcessTime);
+		$event->call();
 
 		$this->proxyLoop = new ProxyLoop($this); // TODO: We can merge this into ProxyServer class
 		$this->getProxyLoop()->run();
@@ -289,9 +307,28 @@ class ProxyServer
 	}
 
 	/**
-	 * @param string $message
-	 * @return void
+	 * Returns the command map.
 	 */
+	public function getCommandMap() : SimpleCommandMap
+	{
+		return $this->commandMap;
+	}
+
+	/**
+	 * Returns the permission manager.
+	 */
+	public function getPermissionManager() : PermissionManager
+	{
+		return $this->permissionManager;
+	}
+
+	public function handleConsoleInput() : void
+    {
+        while (($line = $this->consoleQueue->shift()) !== null) {
+            $this->getCommandMap()->dispatch($this->consoleSender, $line);
+        }
+    }
+
 	public function broadcastMessage(string $message) : void
 	{
 		foreach ($this->getOnlinePlayers() as $player) {
@@ -309,8 +346,8 @@ class ProxyServer
 			$player->disconnect(TranslationFactory::translate('proxy.shutdown'));
 		}
 
-		$ev = new ServerStopEvent();
-		$ev->call();
+		$event = new ServerStopEvent($shutdownStart);
+		$event->call();
 
 		foreach ($this->pluginManager->getPlugins() as $plugin) {
 			if ($plugin->isEnabled()) {

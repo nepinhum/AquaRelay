@@ -22,19 +22,10 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\event\default;
+namespace aquarelay\permission;
 
-use aquarelay\event\Event;
-
-class ServerStartEvent extends Event
+class DefaultPermissionNames
 {
-	private float $startTime;
-
-	public function __construct(float $startTime) {
-		$this->startTime = $startTime;
-	}
-
-	public function getStartTime() : float {
-		return $this->startTime;
-	}
+	const COMMAND_PROXYLIST = "aquarelay.command.proxylist";
+	const COMMAND_PROXYSTOP = "aquarelay.command.proxystop";
 }

@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace aquarelay\player;
 
+use aquarelay\command\sender\CommandSender;
 use aquarelay\form\Form;
 use aquarelay\form\FormValidationException;
 use aquarelay\lang\TranslationFactory;
@@ -31,6 +32,7 @@ use aquarelay\network\handler\downstream\AbstractDownstreamPacketHandler;
 use aquarelay\network\handler\downstream\DownstreamResourcePackHandler;
 use aquarelay\network\NetworkSession;
 use aquarelay\network\raklib\client\BackendRakClient;
+use aquarelay\permission\PermissionHolder;
 use aquarelay\ProxyServer;
 use aquarelay\server\BackendServer;
 use aquarelay\server\ServerException;
@@ -45,7 +47,7 @@ use Ramsey\Uuid\UuidInterface;
 use function get_class;
 use function json_encode;
 
-class Player
+class Player implements CommandSender, PermissionHolder
 {
 	public ?int $backendRuntimeId = null;
 	protected UuidInterface $uuid;
@@ -289,6 +291,11 @@ class Player
 			));
 	}
 
+	public function hasPermission(string $permission) : bool
+	{
+		return $this->getServer()->getPermissionManager()->hasPermission($this->getName(), $permission);
+	}
+
 	public function getServer() : ProxyServer
 	{
 		return $this->proxyServer;
@@ -312,10 +319,17 @@ class Player
 
 	/**
 	 * Returns the backend server information.
-	 * @return BackendServer|null
 	 */
 	public function getBackendServer() : ?BackendServer
 	{
 		return $this->backendServer;
+	}
+
+	/**
+	 * Returns the latency of player.
+	 */
+	public function getPing() : int
+	{
+		return $this->getNetworkSession()->getPing();
 	}
 }

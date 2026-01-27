@@ -22,16 +22,13 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\event;
+namespace aquarelay\command;
 
-trait Cancellable {
-	private bool $cancelled = false;
+use aquarelay\command\sender\CommandSender;
 
-	public function isCancelled() : bool {
-		return $this->cancelled;
-	}
-	
-	public function setCancelled(bool $cancelled = true) : void {
-		$this->cancelled = $cancelled;
-	}
+interface CommandMap {
+
+	public function register(Command $command) : bool;
+	public function dispatch(CommandSender $sender, string $line) : bool;
+	public function getCommand(string $name) : ?Command;
 }

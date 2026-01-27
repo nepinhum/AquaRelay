@@ -22,19 +22,37 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\event\default;
+namespace aquarelay\command\sender;
 
-use aquarelay\event\Event;
+use aquarelay\ProxyServer;
+use aquarelay\utils\Colors;
+use const PHP_EOL;
 
-class ServerStartEvent extends Event
+readonly class ConsoleCommandSender implements CommandSender
 {
-	private float $startTime;
 
-	public function __construct(float $startTime) {
-		$this->startTime = $startTime;
+	public function __construct(private ProxyServer $server)
+	{
+		// NOOP
 	}
 
-	public function getStartTime() : float {
-		return $this->startTime;
+	public function sendMessage(string $message) : void
+	{
+		echo Colors::colorize($message) . PHP_EOL;
+	}
+
+	public function getName() : string
+	{
+		return "CONSOLE";
+	}
+
+	public function getServer() : ProxyServer
+	{
+		return $this->server;
+	}
+
+	public function hasPermission(string $permission) : bool
+	{
+		return true;
 	}
 }

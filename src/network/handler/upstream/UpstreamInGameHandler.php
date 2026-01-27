@@ -45,6 +45,8 @@ use pocketmine\network\mcpe\protocol\RequestChunkRadiusPacket;
 use pocketmine\network\mcpe\protocol\SetLocalPlayerAsInitializedPacket;
 use pocketmine\network\mcpe\protocol\SettingsCommandPacket;
 use pocketmine\network\mcpe\protocol\TextPacket;
+use function ltrim;
+use function trim;
 
 class UpstreamInGameHandler extends AbstractUpstreamPacketHandler
 {
@@ -118,7 +120,30 @@ class UpstreamInGameHandler extends AbstractUpstreamPacketHandler
 
 	public function handleCommandRequest(CommandRequestPacket $packet) : bool
 	{
-		$this->forward($packet);
+		$message = trim($packet->command);
+
+		if ($message === "" || $message[0] !== "/") {
+			$this->forward($packet);
+			return true;
+		}
+
+		$commandLine = ltrim($message, "/");
+
+		if ($commandLine === "") {
+			$this->forward($packet);
+			return true;
+		}
+
+		if ($this->session->getPlayer() !== null) {
+			$player = $this->session->getPlayer();
+			$commandMap = $player->getServer()->getCommandMap();
+
+			if ($commandMap->getCommand($commandLine) === null) {
+				$this->forward($packet);
+			} else {
+				$commandMap->dispatch($player, $commandLine);
+			}
+		}
 		return true;
 	}
 
