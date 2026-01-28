@@ -24,12 +24,10 @@ declare(strict_types=1);
 
 namespace aquarelay\plugin;
 
+use aquarelay\plugin\loader\PluginLoaderInterface;
 use aquarelay\ProxyServer;
 use function count;
 
-/**
- * Manages plugin loading and lifecycle.
- */
 class PluginManager
 {
 	/** @var Plugin[] */
@@ -53,6 +51,11 @@ class PluginManager
 		}
 	}
 
+	public function registerLoader(PluginLoaderInterface $loader) : void
+	{
+		$this->loader->registerLoader($loader);
+	}
+
 	/**
 	 * Enables a plugin.
 	 *
@@ -61,6 +64,11 @@ class PluginManager
 	public function enablePlugin(Plugin $plugin) : void
 	{
 		if ($plugin->isEnabled()) {
+			return;
+		}
+
+		if (!$this->loader->isCompatible($plugin->getDescription()->getApiVersion(), $this->server::VERSION)) {
+			$this->server->getLogger()->error("Could not load plugin '{$plugin->getDescription()->getName()}': requires API version {$plugin->getDescription()->getApiVersion()}, server is " . ProxyServer::VERSION);
 			return;
 		}
 
