@@ -100,7 +100,11 @@ class PluginManager
 		}
 
 		$plugin->setEnabled(true);
-		$plugin->onEnable();
+		try {
+			$plugin->onEnable();
+		} catch (\Throwable $e) {
+			throw new PluginException($e->getMessage());
+		}
 		$this->server->getLogger()->info('Enabled plugin: ' . $plugin->getName());
 	}
 
