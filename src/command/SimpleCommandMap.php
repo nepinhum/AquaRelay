@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace aquarelay\command;
 
 use aquarelay\command\default\ProxyListCommand;
+use aquarelay\command\default\ProxyPluginsCommand;
 use aquarelay\command\default\ProxyStopCommand;
 use aquarelay\command\sender\CommandSender;
 use function array_shift;
@@ -47,6 +48,7 @@ class SimpleCommandMap implements CommandMap {
 	public function registerDefaults() : void
 	{
 		$this->register(new ProxyListCommand());
+		$this->register(new ProxyPluginsCommand());
 		$this->register(new ProxyStopCommand());
 	}
 

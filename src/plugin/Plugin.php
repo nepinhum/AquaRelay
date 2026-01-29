@@ -199,4 +199,11 @@ abstract class Plugin
 
 		return $this->config;
 	}
+
+	public function saveDefaultConfig() : void
+	{
+		if(!file_exists($this->dataFolder . DIRECTORY_SEPARATOR . 'config.yml')){
+			$this->saveResource("config.yml");
+		}
+	}
 }
