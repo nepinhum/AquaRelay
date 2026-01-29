@@ -33,7 +33,7 @@ class PluginManager
 	/** @var Plugin[] */
 	private array $plugins = [];
 
-	public function __construct(private ProxyServer $server, private PluginLoader $loader) {}
+	public function __construct(private readonly ProxyServer $server, private readonly PluginLoader $loader) {}
 
 	/**
 	 * Loads all plugins from the plugins directory.
@@ -53,7 +53,11 @@ class PluginManager
 
 	public function registerLoader(PluginLoaderInterface $loader) : void
 	{
-		$this->loader->registerLoader($loader);
+		try {
+			$this->loader->registerLoader($loader);
+		} catch (PluginException $e) {
+			$this->server->getLogger()->error("Failed to register plugin loader: {$e->getMessage()}");
+		}
 	}
 
 	/**
@@ -68,14 +72,30 @@ class PluginManager
 		}
 
 		if (!$this->loader->isCompatible($plugin->getDescription()->getApiVersion(), $this->server::VERSION)) {
-			$this->server->getLogger()->error("Could not load plugin '{$plugin->getDescription()->getName()}': requires API version {$plugin->getDescription()->getApiVersion()}, server is " . ProxyServer::VERSION);
-			return;
+			throw new PluginException("Plugin requires API version {$plugin->getDescription()->getApiVersion()}, server is " . ProxyServer::VERSION);
+		}
+
+		if (str_starts_with($plugin->getDescription()->getMain(), "aquarelay")) {
+			throw new PluginException("You cannot use namespace aquarelay");
+		}
+
+		if (!class_exists($plugin->getDescription()->getMain(), true)){
+			throw new PluginException("Main class not found");
+		}
+
+		if (!is_a($plugin->getDescription()->getMain(), Plugin::class, true)) {
+			throw new PluginException("Plugin should extend " . Plugin::class);
+		}
+
+		$reflect = new \ReflectionClass($plugin->getDescription()->getMain());
+		if (!$reflect->isInstantiable()){
+			throw new PluginException("Plugin is not instantiable");
 		}
 
 		$dependencies = $plugin->getDescription()->getDependencies();
 		foreach ($dependencies as $dep) {
-			if (!isset($this->plugins[$dep])) {
-				throw new PluginException("Plugin {$plugin->getName()} requires plugin {$dep} which is not loaded");
+			if (!$this->plugins[$dep]->isEnabled()) {
+				throw new PluginException("Dependency $dep is not enabled");
 			}
 		}
 

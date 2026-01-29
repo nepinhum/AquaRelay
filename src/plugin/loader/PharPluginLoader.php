@@ -1,5 +1,27 @@
 <?php
 
+/*
+ *
+ *                            _____      _
+ *     /\                    |  __ \    | |
+ *    /  \   __ _ _   _  __ _| |__) |___| | __ _ _   _
+ *   / /\ \ / _` | | | |/ _` |  _  // _ \ |/ _` | | | |
+ *  / ____ \ (_| | |_| | (_| | | \ \  __/ | (_| | |_| |
+ * /_/    \_\__, |\__,_|\__,_|_|  \_\___|_|\__,_|\__, |
+ *               |_|                              |___/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author AquaRelay Team
+ * @link https://www.aquarelay.dev/
+ *
+ */
+
+declare(strict_types=1);
+
 namespace aquarelay\plugin\loader;
 
 use aquarelay\ProxyServer;
@@ -11,12 +33,13 @@ use Symfony\Component\Yaml\Yaml;
 use function class_exists;
 use function file_exists;
 use function is_subclass_of;
+use function str_replace;
 
 readonly class PharPluginLoader implements PluginLoaderInterface
 {
 	public function __construct(
 		private ProxyServer $server,
-		private string      $dataPath
+		private string $dataPath
 	) {}
 
 	public function canLoad(string $path) : bool
@@ -26,31 +49,39 @@ readonly class PharPluginLoader implements PluginLoaderInterface
 
 	public function load(string $path) : ?Plugin
 	{
-		$pluginYml = "phar://{$path}/plugin.yml";
-		if (!file_exists($pluginYml)) {
-			return null;
+		try {
+			$phar = new \Phar($path);
+		} catch (\Throwable $e) {
+			throw new PluginException("Invalid phar file: {$e->getMessage()}");
 		}
 
-		$data = Yaml::parse(file_get_contents($pluginYml));
-		$description = PluginDescription::fromYaml($data);
+		if (!isset($phar['plugin.yml'])) {
+			throw new PluginException("plugin.yml not found in phar");
+		}
 
-		$vendor = "phar://{$path}/vendor/autoload.php";
+		$yaml = Yaml::parse($phar['plugin.yml']->getContent());
+		if (!is_array($yaml)) {
+			throw new PluginException("plugin.yml is invalid");
+		}
+
+		$description = PluginDescription::fromYaml($yaml);
+
+		$vendor = "phar://$path/vendor/autoload.php";
 		if (file_exists($vendor)) {
 			require_once $vendor;
 		}
 
 		$main = $description->getMain();
 		$mainFile = "phar://{$path}/src/" . str_replace('\\', '/', $main) . '.php';
-		if (file_exists($mainFile)) {
-			require_once $mainFile;
+
+		if (!file_exists($mainFile)) {
+			throw new PluginException("Main class file not found: $mainFile");
 		}
 
-		if (!class_exists($main)) {
-			throw new PluginException("Main class {$main} not found in phar");
-		}
+		require_once $mainFile;
 
-		if (!is_subclass_of($main, Plugin::class)) {
-			throw new PluginException("Main class must extend Plugin");
+		if (!class_exists($main, false)) {
+			throw new PluginException("Main class $main not found");
 		}
 
 		$plugin = new $main();
@@ -60,5 +91,6 @@ readonly class PharPluginLoader implements PluginLoaderInterface
 		$plugin->onLoad();
 
 		return $plugin;
+
 	}
 }

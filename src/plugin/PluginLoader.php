@@ -52,6 +52,12 @@ class PluginLoader
 
 	public function registerLoader(PluginLoaderInterface $loader) : void
 	{
+		foreach ($this->loaders as $loaders) {
+			if ($loaders === $loader){
+				throw new PluginException("Loader already registered");
+			}
+		}
+
 		$this->loaders[] = $loader;
 	}
 
