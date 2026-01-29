@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\event\default;
+namespace aquarelay\event\default\server;
 
 use aquarelay\event\Event;
 

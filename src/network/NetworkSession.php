@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace aquarelay\network;
 
+use aquarelay\event\default\player\PlayerQuitEvent;
 use aquarelay\form\Form;
 use aquarelay\network\compression\ZlibCompressor;
 use aquarelay\network\handler\upstream\AbstractUpstreamPacketHandler;
@@ -383,6 +384,9 @@ class NetworkSession
 	{
 		$this->connected = false;
 		$this->info("Session disconnected: $reason");
+
+		$event = new PlayerQuitEvent($this->getPlayer());
+		$event->call();
 
 		NetworkSessionManager::getInstance()->remove($this);
 

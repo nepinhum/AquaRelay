@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace aquarelay\network\handler\downstream;
 
+use aquarelay\event\default\player\PlayerJoinEvent;
 use pocketmine\network\mcpe\protocol\AvailableCommandsPacket;
 use pocketmine\network\mcpe\protocol\DisconnectPacket;
 use pocketmine\network\mcpe\protocol\PlayStatusPacket;
@@ -145,6 +146,8 @@ class DownstreamInGameHandler extends AbstractDownstreamPacketHandler
 				$this->getPlayer()->getNetworkSession()->debug('Cannot send spawn notification: backendRuntimeId is null.');
 			} else {
 				$this->getPlayer()->getNetworkSession()->debug('Sending spawn notification, waiting for spawn response');
+				$event = new PlayerJoinEvent($this->getPlayer());
+				$event->call();
 			}
 		}
 

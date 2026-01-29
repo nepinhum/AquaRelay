@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace aquarelay\network\handler\upstream;
 
+use aquarelay\event\default\player\PlayerChatEvent;
 use pocketmine\network\mcpe\protocol\AnimatePacket;
 use pocketmine\network\mcpe\protocol\BlockActorDataPacket;
 use pocketmine\network\mcpe\protocol\BlockPickRequestPacket;
@@ -121,7 +122,14 @@ class UpstreamInGameHandler extends AbstractUpstreamPacketHandler
 
 	public function handleText(TextPacket $packet) : bool
 	{
-		$this->forward($packet);
+		$event = new PlayerChatEvent($this->session->getPlayer(), $packet->message);
+		$event->call();
+
+		$packet->message = $event->getMessage();
+
+		if (!$event->isCancelled()) {
+			$this->forward($packet);
+		}
 		return true;
 	}
 
