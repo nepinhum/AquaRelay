@@ -24,87 +24,95 @@ declare(strict_types=1);
 
 namespace aquarelay\plugin\loader;
 
-use aquarelay\ProxyServer;
 use aquarelay\plugin\Plugin;
 use aquarelay\plugin\PluginDescription;
 use aquarelay\plugin\PluginException;
+use aquarelay\ProxyServer;
 use Symfony\Component\Yaml\Yaml;
+use function class_exists;
+use function file_exists;
+use function file_get_contents;
+use function is_file;
+use function spl_autoload_register;
+use function str_ends_with;
+use function str_replace;
+use const DIRECTORY_SEPARATOR;
 
 readonly class PharPluginLoader implements PluginLoaderInterface
 {
-    public function __construct(
-        private ProxyServer $server,
-        private string $dataPath
-    ) {}
+	public function __construct(
+		private ProxyServer $server,
+		private string $dataPath
+	) {}
 
-    public function canLoad(string $path): bool
-    {
-        return is_file($path) && str_ends_with($path, '.phar');
-    }
+	public function canLoad(string $path) : bool
+	{
+		return is_file($path) && str_ends_with($path, '.phar');
+	}
 
-    public function load(string $path): ?Plugin
-    {
-        $pharPath = "phar://{$path}";
+	public function load(string $path) : ?Plugin
+	{
+		$pharPath = "phar://{$path}";
 
-        if (!file_exists($pharPath . '/plugin.yml')) {
-            throw new PluginException("Invalid Plugin: 'plugin.yml' missing in '{$path}'");
-        }
+		if (!file_exists($pharPath . '/plugin.yml')) {
+			throw new PluginException("Invalid Plugin: 'plugin.yml' missing in '{$path}'");
+		}
 
-        try {
-            $data = Yaml::parse(file_get_contents($pharPath . '/plugin.yml'));
-            $description = PluginDescription::fromYaml($data);
-        } catch (\Throwable $e) {
-            throw new PluginException("Error loading plugin.yml in '{$path}': {$e->getMessage()}");
-        }
+		try {
+			$data = Yaml::parse(file_get_contents($pharPath . '/plugin.yml'));
+			$description = PluginDescription::fromYaml($data);
+		} catch (\Throwable $e) {
+			throw new PluginException("Error loading plugin.yml in '{$path}': {$e->getMessage()}");
+		}
 
-        $vendorAutoload = $pharPath . '/vendor/autoload.php';
-        if (file_exists($vendorAutoload)) {
-            require_once $vendorAutoload;
-        }
+		$vendorAutoload = $pharPath . '/vendor/autoload.php';
+		if (file_exists($vendorAutoload)) {
+			require_once $vendorAutoload;
+		}
 
-        $srcPath = $pharPath . '/src';
-        if (file_exists($srcPath)) {
-            $this->registerAutoloader($srcPath);
-        }
+		$srcPath = $pharPath . '/src';
+		if (file_exists($srcPath)) {
+			$this->registerAutoloader($srcPath);
+		}
 
-        $mainClass = $description->getMain();
-        
-        if (!class_exists($mainClass, true)) {
-            $mainFile = $srcPath . '/' . str_replace('\\', '/', $mainClass) . '.php';
-            if (file_exists($mainFile)) {
-                require_once $mainFile;
-            } else {
-                throw new PluginException("Main class file not found: $mainFile");
-            }
-        }
+		$mainClass = $description->getMain();
 
-        if (!class_exists($mainClass)) {
-            throw new PluginException("Class '$mainClass' not found. Namespace mismatch?");
-        }
+		if (!class_exists($mainClass, true)) {
+			$mainFile = $srcPath . '/' . str_replace('\\', '/', $mainClass) . '.php';
+			if (file_exists($mainFile)) {
+				require_once $mainFile;
+			} else {
+				throw new PluginException("Main class file not found: $mainFile");
+			}
+		}
 
-        try {
-            $plugin = new $mainClass();
-            $plugin->setDescription($description);
-            $plugin->setServer($this->server);
-            $plugin->setDataFolder($this->dataPath . 'data' . DIRECTORY_SEPARATOR . $description->getName());
-            $plugin->setResourceFolder($pharPath . '/resources');
-            $plugin->onLoad();
-        } catch (\Throwable $e) {
-            throw new PluginException("Error enabling plugin '{$description->getName()}': {$e->getMessage()}");
-        }
+		if (!class_exists($mainClass)) {
+			throw new PluginException("Class '$mainClass' not found. Namespace mismatch?");
+		}
 
-        return $plugin;
-    }
+		try {
+			$plugin = new $mainClass();
+			$plugin->setDescription($description);
+			$plugin->setServer($this->server);
+			$plugin->setDataFolder($this->dataPath . 'data' . DIRECTORY_SEPARATOR . $description->getName());
+			$plugin->setResourceFolder($pharPath . '/resources');
+			$plugin->onLoad();
+		} catch (\Throwable $e) {
+			throw new PluginException("Error enabling plugin '{$description->getName()}': {$e->getMessage()}");
+		}
 
-    private function registerAutoloader(string $srcPath): void
-    {
-        spl_autoload_register(function (string $class) use ($srcPath): void {
-            $path = str_replace('\\', '/', $class);
-            $file = $srcPath . '/' . $path . '.php';
+		return $plugin;
+	}
 
-            if (file_exists($file)) {
-                require_once $file;
-            }
-        });
-    }
+	private function registerAutoloader(string $srcPath) : void
+	{
+		spl_autoload_register(function (string $class) use ($srcPath) : void {
+			$path = str_replace('\\', '/', $class);
+			$file = $srcPath . '/' . $path . '.php';
+
+			if (file_exists($file)) {
+				require_once $file;
+			}
+		});
+	}
 }

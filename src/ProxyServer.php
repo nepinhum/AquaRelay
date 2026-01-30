@@ -95,10 +95,10 @@ class ProxyServer
 
 		$this->consoleSender = new ConsoleCommandSender($this);
 
-        $this->consoleQueue = new ThreadSafeArray();
+		$this->consoleQueue = new ThreadSafeArray();
 
-        $consoleThread = new ConsoleReaderThread($this->consoleQueue);
-        $consoleThread->start(Thread::INHERIT_ALL);
+		$consoleThread = new ConsoleReaderThread($this->consoleQueue);
+		$consoleThread->start(Thread::INHERIT_ALL);
 
 		self::$instance = $this;
 		$this->startProcessTime = microtime(true);
@@ -326,11 +326,11 @@ class ProxyServer
 	}
 
 	public function handleConsoleInput() : void
-    {
-        while (($line = $this->consoleQueue->shift()) !== null) {
-            $this->getCommandMap()->dispatch($this->consoleSender, $line);
-        }
-    }
+	{
+		while (($line = $this->consoleQueue->shift()) !== null) {
+			$this->getCommandMap()->dispatch($this->consoleSender, $line);
+		}
+	}
 
 	public function broadcastMessage(string $message) : void
 	{

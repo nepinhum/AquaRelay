@@ -35,12 +35,15 @@ use pocketmine\network\mcpe\protocol\types\command\raw\CommandEnumRawData;
 use pocketmine\network\mcpe\protocol\types\command\raw\CommandOverloadRawData;
 use pocketmine\network\mcpe\protocol\types\command\raw\CommandParameterRawData;
 use pocketmine\network\mcpe\protocol\types\command\raw\CommandRawData;
+use function array_search;
+use function count;
 use function strtolower;
+use function ucfirst;
 
 class DownstreamInGameHandler extends AbstractDownstreamPacketHandler
 {
 
-	public function handleAvailableCommands(AvailableCommandsPacket $packet): bool
+	public function handleAvailableCommands(AvailableCommandsPacket $packet) : bool
 	{
 		$player = $this->getPlayer();
 		$server = $player->getServer();

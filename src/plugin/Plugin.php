@@ -29,153 +29,160 @@ use aquarelay\event\HandlerList;
 use aquarelay\event\Listener;
 use aquarelay\ProxyServer;
 use aquarelay\task\TaskScheduler;
-use Symfony\Component\Filesystem\Path;
 use RuntimeException;
+use Symfony\Component\Filesystem\Path;
+use function copy;
+use function dirname;
+use function error_log;
+use function file_exists;
+use function is_dir;
+use function mkdir;
+use function trim;
 
 abstract class Plugin
 {
-    private PluginDescription $description;
-    private ProxyServer $server;
-    private bool $enabled = false;
-    private string $dataFolder;
-    private string $resourceFolder;
-    private ?Config $config = null;
+	private PluginDescription $description;
+	private ProxyServer $server;
+	private bool $enabled = false;
+	private string $dataFolder;
+	private string $resourceFolder;
+	private ?Config $config = null;
 
-    public function onLoad() : void {}
-    public function onEnable() : void {}
-    public function onDisable() : void {}
+	public function onLoad() : void {}
+	public function onEnable() : void {}
+	public function onDisable() : void {}
 
-    public function setDescription(PluginDescription $description) : void
-    {
-        $this->description = $description;
-    }
+	public function setDescription(PluginDescription $description) : void
+	{
+		$this->description = $description;
+	}
 
-    public function getDescription() : PluginDescription
-    {
-        return $this->description;
-    }
+	public function getDescription() : PluginDescription
+	{
+		return $this->description;
+	}
 
-    public function setServer(ProxyServer $server) : void
-    {
-        $this->server = $server;
-    }
+	public function setServer(ProxyServer $server) : void
+	{
+		$this->server = $server;
+	}
 
-    public function getServer() : ProxyServer
-    {
-        return $this->server;
-    }
+	public function getServer() : ProxyServer
+	{
+		return $this->server;
+	}
 
-    public function getName() : string
-    {
-        return $this->description->getName();
-    }
+	public function getName() : string
+	{
+		return $this->description->getName();
+	}
 
-    public function getVersion() : string
-    {
-        return $this->description->getVersion();
-    }
+	public function getVersion() : string
+	{
+		return $this->description->getVersion();
+	}
 
-    public function getAuthors() : array
-    {
-        return $this->description->getAuthors();
-    }
+	public function getAuthors() : array
+	{
+		return $this->description->getAuthors();
+	}
 
-    public function isEnabled() : bool
-    {
-        return $this->enabled;
-    }
+	public function isEnabled() : bool
+	{
+		return $this->enabled;
+	}
 
-    public function setEnabled(bool $enabled) : void
-    {
-        $this->enabled = $enabled;
-    }
+	public function setEnabled(bool $enabled) : void
+	{
+		$this->enabled = $enabled;
+	}
 
-    public function getScheduler() : TaskScheduler
-    {
-        return $this->server->getScheduler();
-    }
+	public function getScheduler() : TaskScheduler
+	{
+		return $this->server->getScheduler();
+	}
 
    public function setDataFolder(string $dataFolder) : void
-    {
-        $this->dataFolder = $dataFolder;
-    }
+	{
+		$this->dataFolder = $dataFolder;
+	}
 
-    public function setResourceFolder(string $resourceFolder) : void
-    {
-        $this->resourceFolder = $resourceFolder;
-    }
+	public function setResourceFolder(string $resourceFolder) : void
+	{
+		$this->resourceFolder = $resourceFolder;
+	}
 
-    public function getDataFolder() : string
-    {
-        return $this->dataFolder;
-    }
+	public function getDataFolder() : string
+	{
+		return $this->dataFolder;
+	}
 
-    public function saveResource(string $filename, bool $replace = false) : void
-    {
-        if (trim($filename) === "") {
-            return;
-        }
+	public function saveResource(string $filename, bool $replace = false) : void
+	{
+		if (trim($filename) === "") {
+			return;
+		}
 
-        if (!isset($this->resourceFolder)) {
-            throw new RuntimeException("Resource folder not initialized for plugin " . $this->getName());
-        }
+		if (!isset($this->resourceFolder)) {
+			throw new RuntimeException("Resource folder not initialized for plugin " . $this->getName());
+		}
 
-        $source = Path::join($this->resourceFolder, $filename);
-        
-        if (!file_exists($source)) {
-            error_log("Warning: Could not save resource '$filename' for " . $this->getName() . ". Source not found.");
-            return;
-        }
+		$source = Path::join($this->resourceFolder, $filename);
 
-        $destination = Path::join($this->dataFolder, $filename);
-        $destDir = dirname($destination);
+		if (!file_exists($source)) {
+			error_log("Warning: Could not save resource '$filename' for " . $this->getName() . ". Source not found.");
+			return;
+		}
 
-        if (!is_dir($destDir)) {
-            mkdir($destDir, 0755, true);
-        }
+		$destination = Path::join($this->dataFolder, $filename);
+		$destDir = dirname($destination);
 
-        if (file_exists($destination) && !$replace) {
-            return;
-        }
+		if (!is_dir($destDir)) {
+			mkdir($destDir, 0755, true);
+		}
 
-        copy($source, $destination);
-    }
+		if (file_exists($destination) && !$replace) {
+			return;
+		}
 
-    public function saveFile(string $file) : void 
-    {
-        $this->saveResource($file, false);
-    }
+		copy($source, $destination);
+	}
 
-    public function registerEvent(Listener $listener) : void 
-    {
-        HandlerList::register($listener);
-    }
+	public function saveFile(string $file) : void
+	{
+		$this->saveResource($file, false);
+	}
 
-    /**
-     * Gets the config object safely.
-     */
-    public function getConfig() : ?Config
-    {
-        if ($this->config !== null) {
-            return $this->config;
-        }
-        
-        $folder = $this->getDataFolder();
-        $configPath = Path::join($folder, "config.yml");
+	public function registerEvent(Listener $listener) : void
+	{
+		HandlerList::register($listener);
+	}
 
-        if (!file_exists($configPath)) {
-            $this->saveDefaultConfig();
-        }
+	/**
+	 * Gets the config object safely.
+	 */
+	public function getConfig() : ?Config
+	{
+		if ($this->config !== null) {
+			return $this->config;
+		}
 
-        if (file_exists($configPath)) {
-            $this->config = new Config($configPath);
-        }
+		$folder = $this->getDataFolder();
+		$configPath = Path::join($folder, "config.yml");
 
-        return $this->config;
-    }
+		if (!file_exists($configPath)) {
+			$this->saveDefaultConfig();
+		}
 
-    public function saveDefaultConfig() : void
-    {
-        $this->saveResource("config.yml");
-    }
+		if (file_exists($configPath)) {
+			$this->config = new Config($configPath);
+		}
+
+		return $this->config;
+	}
+
+	public function saveDefaultConfig() : void
+	{
+		$this->saveResource("config.yml");
+	}
 }

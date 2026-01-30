@@ -28,7 +28,9 @@ use aquarelay\command\builder\CommandBuilder;
 use aquarelay\command\Command;
 use aquarelay\command\sender\CommandSender;
 use aquarelay\permission\DefaultPermissionNames;
-use aquarelay\ProxyServer;
+use function array_keys;
+use function count;
+use function implode;
 
 class ProxyPluginsCommand extends Command
 {

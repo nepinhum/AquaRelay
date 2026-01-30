@@ -47,7 +47,12 @@ use pocketmine\network\mcpe\protocol\RequestChunkRadiusPacket;
 use pocketmine\network\mcpe\protocol\SetLocalPlayerAsInitializedPacket;
 use pocketmine\network\mcpe\protocol\SettingsCommandPacket;
 use pocketmine\network\mcpe\protocol\TextPacket;
+use function array_shift;
+use function count;
+use function explode;
+use function implode;
 use function ltrim;
+use function strtolower;
 use function trim;
 
 class UpstreamInGameHandler extends AbstractUpstreamPacketHandler
@@ -83,7 +88,7 @@ class UpstreamInGameHandler extends AbstractUpstreamPacketHandler
 		return true;
 	}
 
-	public function handleMobEquipment(MobEquipmentPacket $packet): bool
+	public function handleMobEquipment(MobEquipmentPacket $packet) : bool
 	{
 		$this->forward($packet);
 		return true;

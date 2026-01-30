@@ -29,10 +29,6 @@ use aquarelay\plugin\PluginException;
 
 interface PluginLoaderInterface
 {
-	/**
-	 * @param string $path
-	 * @return bool
-	 */
 	public function canLoad(string $path) : bool;
 
 	/**

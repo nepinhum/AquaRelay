@@ -37,116 +37,115 @@ use const DIRECTORY_SEPARATOR;
 
 class PluginLoader
 {
-    private MainLogger $logger;
-    private string $dataPath;
-    /** @var PluginLoaderInterface[] */
-    private array $loaders = [];
-    
-    /** * @var array<string, mixed> 
-     * Stores currently loaded plugins to prevent duplicates 
-     */
-    private array $loadedPlugins = [];
+	private MainLogger $logger;
+	private string $dataPath;
+	/** @var PluginLoaderInterface[] */
+	private array $loaders = [];
 
-    public function __construct(private readonly ProxyServer $server, private readonly string $pluginsPath)
-    {
-        $this->logger = $server->getLogger();
-        $this->dataPath = $this->pluginsPath . DIRECTORY_SEPARATOR . 'data';
-        if (!is_dir($this->dataPath)) {
-            mkdir($this->dataPath, 0o755, true);
-        }
-    }
+	/** * @var array<string, mixed>
+	 * Stores currently loaded plugins to prevent duplicates
+	 */
+	private array $loadedPlugins = [];
 
-    public function registerLoader(PluginLoaderInterface $loader) : void
-    {
-        foreach ($this->loaders as $loaders) {
-            if ($loaders === $loader){
-                throw new PluginException("Loader already registered");
-            }
-        }
+	public function __construct(private readonly ProxyServer $server, private readonly string $pluginsPath)
+	{
+		$this->logger = $server->getLogger();
+		$this->dataPath = $this->pluginsPath . DIRECTORY_SEPARATOR . 'data';
+		if (!is_dir($this->dataPath)) {
+			mkdir($this->dataPath, 0o755, true);
+		}
+	}
 
-        $this->loaders[] = $loader;
-    }
+	public function registerLoader(PluginLoaderInterface $loader) : void
+	{
+		foreach ($this->loaders as $loaders) {
+			if ($loaders === $loader){
+				throw new PluginException("Loader already registered");
+			}
+		}
 
-    /**
-     * @return PluginLoaderInterface[]
-     */
-    public function getLoaders() : array
-    {
-        return $this->loaders;
-    }
+		$this->loaders[] = $loader;
+	}
 
-    /**
-     * Loads all plugins from the plugins directory.
-     */
-    public function loadPlugins() : array
-    {
-        $plugins = [];
+	/**
+	 * @return PluginLoaderInterface[]
+	 */
+	public function getLoaders() : array
+	{
+		return $this->loaders;
+	}
 
-        foreach (scandir($this->pluginsPath) ?: [] as $entry) {
-            if ($entry === '.' || $entry === '..' || $entry === 'data') continue;
+	/**
+	 * Loads all plugins from the plugins directory.
+	 */
+	public function loadPlugins() : array
+	{
+		$plugins = [];
 
-            $path = $this->pluginsPath . DIRECTORY_SEPARATOR . $entry;
+		foreach (scandir($this->pluginsPath) ?: [] as $entry) {
+			if ($entry === '.' || $entry === '..' || $entry === 'data') continue;
 
-            foreach ($this->getLoaders() as $loader) {
-                if (!$loader->canLoad($path)) {
-                    continue;
-                }
+			$path = $this->pluginsPath . DIRECTORY_SEPARATOR . $entry;
 
-                try {
-                    $plugin = $loader->load($path);
-                    if ($plugin !== null) {
-                        if (isset($this->loadedPlugins[$plugin->getName()])) {
-                            break;
-                        }
-                        
-                        if (isset($plugins[$plugin->getName()])) {
-                             $this->logger->warning("Duplicate plugin '{$plugin->getName()}' detected in scan. Ignoring $entry.");
-                             break;
-                        }
+			foreach ($this->getLoaders() as $loader) {
+				if (!$loader->canLoad($path)) {
+					continue;
+				}
 
-                        $this->loadedPlugins[$plugin->getName()] = $plugin;
-                        $plugins[$plugin->getName()] = $plugin;
-                    }
-                } catch (\Throwable $e) {
-                    $this->server->getLogger()->error("Failed to load plugin $entry: {$e->getMessage()}");
-                }
+				try {
+					$plugin = $loader->load($path);
+					if ($plugin !== null) {
+						if (isset($this->loadedPlugins[$plugin->getName()])) {
+							break;
+						}
 
-                break;
-            }
-        }
+						if (isset($plugins[$plugin->getName()])) {
+							 $this->logger->warning("Duplicate plugin '{$plugin->getName()}' detected in scan. Ignoring $entry.");
+							 break;
+						}
 
+						$this->loadedPlugins[$plugin->getName()] = $plugin;
+						$plugins[$plugin->getName()] = $plugin;
+					}
+				} catch (\Throwable $e) {
+					$this->server->getLogger()->error("Failed to load plugin $entry: {$e->getMessage()}");
+				}
 
-        return $plugins;
-    }
+				break;
+			}
+		}
 
-    /**
-     * Checks if the plugin API version is compatible with the server API version.
-     *
-     * @param string $pluginVersion Version required by plugin (e.g. "5.0.0")
-     * @param string $serverVersion Version of server (e.g. "5.3.2")
-     */
-    public function isCompatible(string $pluginVersion, string $serverVersion) : bool
-    {
-        $pluginParts = array_map('intval', explode('.', $pluginVersion));
-        $serverParts = array_map('intval', explode('.', $serverVersion));
+		return $plugins;
+	}
 
-        for ($i = count($pluginParts); $i < 3; ++$i) {
-            $pluginParts[$i] = 0;
-        }
-        for ($i = count($serverParts); $i < 3; ++$i) {
-            $serverParts[$i] = 0;
-        }
+	/**
+	 * Checks if the plugin API version is compatible with the server API version.
+	 *
+	 * @param string $pluginVersion Version required by plugin (e.g. "5.0.0")
+	 * @param string $serverVersion Version of server (e.g. "5.3.2")
+	 */
+	public function isCompatible(string $pluginVersion, string $serverVersion) : bool
+	{
+		$pluginParts = array_map('intval', explode('.', $pluginVersion));
+		$serverParts = array_map('intval', explode('.', $serverVersion));
 
-        if ($pluginParts[0] !== $serverParts[0]) {
-            return false;
-        }
+		for ($i = count($pluginParts); $i < 3; ++$i) {
+			$pluginParts[$i] = 0;
+		}
+		for ($i = count($serverParts); $i < 3; ++$i) {
+			$serverParts[$i] = 0;
+		}
 
-        for ($i = 1; $i < 3; ++$i) {
-            if ($serverParts[$i] < $pluginParts[$i]) {
-                return false;
-            }
-        }
+		if ($pluginParts[0] !== $serverParts[0]) {
+			return false;
+		}
 
-        return true;
-    }
+		for ($i = 1; $i < 3; ++$i) {
+			if ($serverParts[$i] < $pluginParts[$i]) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 }

@@ -29,55 +29,55 @@ use aquarelay\event\Event;
 class QueryRegenerateEvent extends Event
 {
 	private string $name;
-    private string $subMotd;
-    private int $maxPlayers;
-    private int $currentPlayers;
+	private string $subMotd;
+	private int $maxPlayers;
+	private int $currentPlayers;
 
 	public function __construct(string $name, string $subMotd, int $maxPlayers, int $currentPlayers)
-    {
-        $this->name = $name;
-        $this->subMotd = $subMotd;
-        $this->maxPlayers = $maxPlayers;
-        $this->currentPlayers = $currentPlayers;
+	{
+		$this->name = $name;
+		$this->subMotd = $subMotd;
+		$this->maxPlayers = $maxPlayers;
+		$this->currentPlayers = $currentPlayers;
 	}
 
-    public function getName(): string
-    {
-        return $this->name;
-    }
+	public function getName() : string
+	{
+		return $this->name;
+	}
 
-    public function getSubMotd(): string
-    {
-        return $this->subMotd;
-    }
+	public function getSubMotd() : string
+	{
+		return $this->subMotd;
+	}
 
-    public function getMaxPlayers(): int
-    {
-        return $this->maxPlayers;
-    }
+	public function getMaxPlayers() : int
+	{
+		return $this->maxPlayers;
+	}
 
-    public function getCurrentPlayers(): int
-    {
-        return $this->currentPlayers;
-    }
+	public function getCurrentPlayers() : int
+	{
+		return $this->currentPlayers;
+	}
 
-    public function setName(string $name): void
-    {
-        $this->name = $name;
-    }
+	public function setName(string $name) : void
+	{
+		$this->name = $name;
+	}
 
-    public function setSubMotd(string $subMotd): void
-    {
-        $this->subMotd = $subMotd;
-    }
+	public function setSubMotd(string $subMotd) : void
+	{
+		$this->subMotd = $subMotd;
+	}
 
-    public function setMaxPlayers(int $maxPlayers): void
-    {
-        $this->maxPlayers = $maxPlayers;
-    }
+	public function setMaxPlayers(int $maxPlayers) : void
+	{
+		$this->maxPlayers = $maxPlayers;
+	}
 
-    public function setCurrentPlayers(int $currentPlayers): void
-    {
-        $this->currentPlayers = $currentPlayers;
-    }
+	public function setCurrentPlayers(int $currentPlayers) : void
+	{
+		$this->currentPlayers = $currentPlayers;
+	}
 }
