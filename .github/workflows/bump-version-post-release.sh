@@ -38,4 +38,5 @@ NEW_VERSION="$(bump_version "$BASE_VERSION")"
 
 sed -i -E "s|public const VERSION = \"[^\"]+\"|public const VERSION = \"$NEW_VERSION\"|" ./src/ProxyServer.php
 
+git add ./src/ProxyServer.php
 git commit -m "Next: $NEW_VERSION" -m "$additional_info" --only ./src/ProxyServer.php
