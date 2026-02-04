@@ -40,6 +40,7 @@ use aquarelay\player\PlayerManager;
 use aquarelay\plugin\loader\PharPluginLoader;
 use aquarelay\plugin\PluginLoader;
 use aquarelay\plugin\PluginManager;
+use aquarelay\resourcepack\ResourcepackManager;
 use aquarelay\server\ServerManager;
 use aquarelay\task\TaskScheduler;
 use aquarelay\utils\Colors;
@@ -78,6 +79,7 @@ class ProxyServer
 	private ServerManager $serverManager;
 	private SimpleCommandMap $commandMap;
 	private PermissionManager $permissionManager;
+	private ResourcepackManager $resource_packManager;
 
 	private ConsoleCommandSender $consoleSender;
 
@@ -140,6 +142,11 @@ class ProxyServer
 		$this->commandMap = new SimpleCommandMap();
 		$this->playerManager = new PlayerManager();
 		$this->taskScheduler = new TaskScheduler();
+		$this->resource_packManager = new ResourcepackManager(
+			$this,
+			$this->getConfig()->getResourcePackSettings(),
+			$this->dataPath
+		);
 
 		register_shutdown_function([$this, 'shutdown']);
 
@@ -323,6 +330,14 @@ class ProxyServer
 	public function getPermissionManager() : PermissionManager
 	{
 		return $this->permissionManager;
+	}
+
+	/**
+	 * Returns the resource pack manager.
+	 */
+	public function getResourcepackManager(): ResourcepackManager
+	{
+		return $this->resource_packManager;
 	}
 
 	public function handleConsoleInput() : void

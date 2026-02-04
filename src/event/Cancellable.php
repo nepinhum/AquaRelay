@@ -22,28 +22,8 @@
 
 declare(strict_types=1);
 
-namespace aquarelay\event\default\player;
+namespace aquarelay\event;
 
-use aquarelay\event\Cancellable;
-use aquarelay\event\CancellableTrait;
-use aquarelay\player\Player;
-
-class PlayerChatEvent extends PlayerEvent implements Cancellable
-{
-
-	use CancellableTrait;
-
-	public function __construct(Player $player, protected string $message)
-	{
-		$this->player = $player;
-	}
-
-	public function setMessage(string $message) : void{
-		$this->message = $message;
-	}
-
-	public function getMessage() : string{
-		return $this->message;
-	}
-
+interface Cancellable {
+	public function isCancelled() : bool;
 }
