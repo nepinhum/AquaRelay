@@ -153,7 +153,7 @@ class UpstreamResourcePackHandler extends AbstractUpstreamPacketHandler
 
 	private function completeLogin() : void
 	{
-		$this->session->debug('Resource packs sequence completed.');
+		$this->session->debug(TranslationFactory::translate("resource_pack.sequence_completed"));
 
 		$publisher = NetworkChunkPublisherUpdatePacket::create(
 			new BlockPosition(0, 0, 0),
