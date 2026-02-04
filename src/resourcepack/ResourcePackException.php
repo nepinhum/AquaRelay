@@ -24,6 +24,6 @@ declare(strict_types=1);
 
 namespace aquarelay\resourcepack;
 
-final class ResourcepackException extends \RuntimeException
+final class ResourcePackException extends \RuntimeException
 {
 }

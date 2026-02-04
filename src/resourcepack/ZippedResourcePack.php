@@ -39,9 +39,9 @@ use function preg_match;
 use function strlen;
 use const JSON_THROW_ON_ERROR;
 
-final class ZippedResourcepack implements Resourcepack
+final class ZippedResourcePack implements ResourcePack
 {
-	private ResourcepackManifest $manifest;
+	private ResourcePackManifest $manifest;
 	private ?string $sha256 = null;
 	private string $path;
 	/** @var resource */
@@ -52,17 +52,17 @@ final class ZippedResourcepack implements Resourcepack
 		$this->path = $path;
 
 		if (!file_exists($path)) {
-			throw new ResourcepackException("Resource pack file not found");
+			throw new ResourcePackException("Resource pack file not found");
 		}
 
 		$size = filesize($path);
 		if ($size === false || $size === 0) {
-			throw new ResourcepackException("Resource pack file is empty or unreadable");
+			throw new ResourcePackException("Resource pack file is empty or unreadable");
 		}
 
 		$zip = new \ZipArchive();
 		if ($zip->open($path) !== true) {
-			throw new ResourcepackException("Resource pack is not a valid zip");
+			throw new ResourcePackException("Resource pack is not a valid zip");
 		}
 
 		$manifestData = $zip->getFromName("manifest.json");
@@ -87,20 +87,20 @@ final class ZippedResourcepack implements Resourcepack
 		$zip->close();
 
 		if (!is_string($manifestData)) {
-			throw new ResourcepackException("manifest.json not found in resource pack");
+			throw new ResourcePackException("manifest.json not found in resource pack");
 		}
 
 		try {
 			$manifestArray = json_decode($manifestData, true, 512, JSON_THROW_ON_ERROR);
 		} catch (\JsonException $e) {
-			throw new ResourcepackException("Failed to parse manifest.json: " . $e->getMessage(), 0, $e);
+			throw new ResourcePackException("Failed to parse manifest.json: " . $e->getMessage(), 0, $e);
 		}
 
 		if (!is_array($manifestArray)) {
-			throw new ResourcepackException("manifest.json should be a JSON object");
+			throw new ResourcePackException("manifest.json should be a JSON object");
 		}
 
-		$this->manifest = ResourcepackManifest::fromArray($manifestArray);
+		$this->manifest = ResourcePackManifest::fromArray($manifestArray);
 
 		$this->fileResource = fopen($this->path, "rb");
 	}
@@ -146,17 +146,17 @@ final class ZippedResourcepack implements Resourcepack
 	public function getChunk(int $offset, int $length) : string
 	{
 		if ($length < 1) {
-			throw new ResourcepackException("Invalid resource pack chunk length");
+			throw new ResourcePackException("Invalid resource pack chunk length");
 		}
 
 		fseek($this->fileResource, $offset);
 		if (feof($this->fileResource)) {
-			throw new ResourcepackException("Requested resource pack chunk out of range");
+			throw new ResourcePackException("Requested resource pack chunk out of range");
 		}
 
 		$data = fread($this->fileResource, $length);
 		if ($data === false) {
-			throw new ResourcepackException("Failed to read resource pack chunk");
+			throw new ResourcePackException("Failed to read resource pack chunk");
 		}
 		return $data;
 	}

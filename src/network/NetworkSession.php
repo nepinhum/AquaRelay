@@ -226,24 +226,11 @@ class NetworkSession
 
 		$this->sendDataPacket(PlayStatusPacket::create(PlayStatusPacket::LOGIN_SUCCESS));
 
-		$packManager = $this->server->getResourcepackManager();
+		$packManager = $this->server->getResourcePackManager();
 		if ($packManager->isEnabled()) {
 			$this->sendDataPacket($packManager->getPacksInfoPacket(), true);
 		} else {
-			$infoPacket = ResourcePacksInfoPacket::create(
-				resourcePackEntries: [],
-				behaviorPackEntries: [],
-				mustAccept: false,
-				hasAddons: false,
-				hasScripts: false,
-				forceServerPacks: false,
-				cdnUrls: [],
-				worldTemplateId: Uuid::fromString(Uuid::NIL),
-				worldTemplateVersion: '',
-				forceDisableVibrantVisuals: true,
-			);
-
-			$this->sendDataPacket($infoPacket, true);
+			$this->sendDataPacket($packManager->buildEmptyStackPacket(), true);
 		}
 
 		$this->setHandler(new UpstreamResourcePackHandler($this, $this->server->getLogger()));

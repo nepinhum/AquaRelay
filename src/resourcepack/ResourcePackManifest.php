@@ -30,7 +30,7 @@ use function is_array;
 use function is_string;
 use function sprintf;
 
-final class ResourcepackManifest
+final class ResourcePackManifest
 {
 	public function __construct(
 		private string $name,
@@ -66,7 +66,7 @@ final class ResourcepackManifest
 	{
 		$header = $data['header'] ?? null;
 		if (!is_array($header)) {
-			throw new ResourcepackException("manifest.json is missing header");
+			throw new ResourcePackException("manifest.json is missing header");
 		}
 
 		$name = $header['name'] ?? null;
@@ -74,11 +74,11 @@ final class ResourcepackManifest
 		$version = $header['version'] ?? null;
 
 		if (!is_string($name) || !is_string($uuid) || !is_array($version)) {
-			throw new ResourcepackException("manifest.json header is invalid");
+			throw new ResourcePackException("manifest.json header is invalid");
 		}
 
 		if (!Uuid::isValid($uuid)) {
-			throw new ResourcepackException("manifest.json has invalid uuid");
+			throw new ResourcePackException("manifest.json has invalid uuid");
 		}
 
 		$versionString = sprintf(
@@ -90,12 +90,12 @@ final class ResourcepackManifest
 
 		$modules = $data['modules'] ?? null;
 		if (!is_array($modules) || $modules === [] || !is_array($modules[0])) {
-			throw new ResourcepackException("manifest.json has no modules");
+			throw new ResourcePackException("manifest.json has no modules");
 		}
 
 		$type = $modules[0]['type'] ?? null;
 		if (!is_string($type)) {
-			throw new ResourcepackException("manifest.json module type is invalid");
+			throw new ResourcePackException("manifest.json module type is invalid");
 		}
 
 		return new self($name, Uuid::fromString($uuid), $versionString, $type);

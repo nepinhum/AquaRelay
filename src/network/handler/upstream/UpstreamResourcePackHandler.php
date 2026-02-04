@@ -61,7 +61,7 @@ class UpstreamResourcePackHandler extends AbstractUpstreamPacketHandler
 
 	public function handleResourcePackClientResponse(ResourcePackClientResponsePacket $packet) : bool
 	{
-		$packManager = $this->session->getServer()->getResourcepackManager();
+		$packManager = $this->session->getServer()->getResourcePackManager();
 		$packsEnabled = $packManager->isEnabled();
 
 		switch ($packet->status) {
@@ -106,7 +106,7 @@ class UpstreamResourcePackHandler extends AbstractUpstreamPacketHandler
 
 	public function handleResourcePackChunkRequest(ResourcePackChunkRequestPacket $packet) : bool
 	{
-		$packManager = $this->session->getServer()->getResourcepackManager();
+		$packManager = $this->session->getServer()->getResourcePackManager();
 		if (!$packManager->isEnabled()) {
 			return true;
 		}
@@ -130,7 +130,7 @@ class UpstreamResourcePackHandler extends AbstractUpstreamPacketHandler
 
 	private function sendNextPackInfo() : void
 	{
-		$packManager = $this->session->getServer()->getResourcepackManager();
+		$packManager = $this->session->getServer()->getResourcePackManager();
 		if (!$packManager->isEnabled()) {
 			return;
 		}
@@ -153,7 +153,7 @@ class UpstreamResourcePackHandler extends AbstractUpstreamPacketHandler
 
 	private function completeLogin() : void
 	{
-		$this->session->debug(TranslationFactory::translate("resource_pack.sequence_completed"));
+		$this->session->debug('Resource packs sequence completed.');
 
 		$publisher = NetworkChunkPublisherUpdatePacket::create(
 			new BlockPosition(0, 0, 0),

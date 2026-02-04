@@ -26,7 +26,7 @@ namespace aquarelay\resourcepack;
 
 use Ramsey\Uuid\UuidInterface;
 
-interface Resourcepack
+interface ResourcePack
 {
 	public const TYPE_RESOURCES = "resources";
 	public const TYPE_DATA = "data";

@@ -50,16 +50,16 @@ use function str_starts_with;
 use function strtolower;
 use const DIRECTORY_SEPARATOR;
 
-final class ResourcepackManager
+final class ResourcePackManager
 {
 	private const CHUNK_SIZE = 102400;
 	private const PACK_EXTENSIONS = ['zip', 'mcpack'];
 	private const DEFAULT_PACKS_DIR = 'resourcepacks';
 
 	private string $packsPath;
-	/** @var Resourcepack[] */
+	/** @var ResourcePack[] */
 	private array $packs = [];
-	/** @var array<string, Resourcepack> */
+	/** @var array<string, ResourcePack> */
 	private array $packsById = [];
 
 	private ResourcePacksInfoPacket $packsInfoPacket;
@@ -101,14 +101,14 @@ final class ResourcepackManager
 	}
 
 	/**
-	 * @return Resourcepack[]
+	 * @return ResourcePack[]
 	 */
 	public function getPacks() : array
 	{
 		return $this->packs;
 	}
 
-	public function getPackById(string $uuid) : ?Resourcepack
+	public function getPackById(string $uuid) : ?ResourcePack
 	{
 		return $this->packsById[strtolower($uuid)] ?? null;
 	}
@@ -139,7 +139,7 @@ final class ResourcepackManager
 		);
 	}
 
-	private function buildEmptyStackPacket() : ResourcePackStackPacket
+	public function buildEmptyStackPacket() : ResourcePackStackPacket
 	{
 		return ResourcePackStackPacket::create(
 			[],
@@ -159,7 +159,7 @@ final class ResourcepackManager
 		}
 
 		$chunkCount = (int) (($pack->getSize() - 1) / self::CHUNK_SIZE) + 1;
-		$packType = $pack->getType() === Resourcepack::TYPE_DATA
+		$packType = $pack->getType() === ResourcePack::TYPE_DATA
 			? ResourcePackType::ADDON
 			: ResourcePackType::RESOURCES;
 
@@ -184,7 +184,7 @@ final class ResourcepackManager
 		$offset = $chunkIndex * self::CHUNK_SIZE;
 		try {
 			$data = $pack->getChunk($offset, self::CHUNK_SIZE);
-		} catch (ResourcepackException) {
+		} catch (ResourcePackException) {
 			return null;
 		}
 
@@ -223,8 +223,8 @@ final class ResourcepackManager
 			}
 
 			try {
-				$pack = new ZippedResourcepack($fullPath);
-			} catch (ResourcepackException $e) {
+				$pack = new ZippedResourcePack($fullPath);
+			} catch (ResourcePackException $e) {
 				$this->server->getLogger()->warning(TranslationFactory::translate("resource_pack.failed_to_load", [
 					$entry, $e->getMessage()
 				]));
@@ -256,7 +256,7 @@ final class ResourcepackManager
 		$hasAddons = false;
 
 		foreach ($this->packs as $pack) {
-			if ($pack->getType() === Resourcepack::TYPE_DATA) {
+			if ($pack->getType() === ResourcePack::TYPE_DATA) {
 				$hasAddons = true;
 				$behaviorPackEntries[] = new BehaviorPackInfoEntry(
 					$pack->getUuid()->toString(),
